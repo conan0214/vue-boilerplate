@@ -1,0 +1,472 @@
+<template>
+    <div class="materials-tab-wrapper">
+        <el-table :data="materialsList" style="width: 100%">
+            <el-table-column type="index"></el-table-column>
+            <el-table-column label="农资ID" prop="agriculturalNo" width="120"></el-table-column>
+            <el-table-column label="农资名称" prop="title" width="150"></el-table-column>
+            <el-table-column label="农资类型" width="120">
+                <template #default="scope">
+                    {{ scope.row.agriculturalCategory }}
+                </template>
+            </el-table-column>
+            <el-table-column label="参考价值（元）" prop="agriculturalPrice" width="150"></el-table-column>
+            <el-table-column label="规格" width="180">
+                <template #default="scope">
+                    {{ scope.row.agriculturalCount }}{{ scope.row.unitweight }}/{{ scope.row.unitmeasurement }}
+                </template>
+            </el-table-column>
+            <el-table-column label="状态" prop="" width="180"> </el-table-column>
+            <el-table-column label="厂家" prop="manufacturers" width="180"></el-table-column>
+            <el-table-column label="操作" width="300">
+                <template #default="scope">
+                    <el-button type="text" size="small" @click="viewDetail(scope.row)">查看详情</el-button>
+                    <el-button type="text" size="small" @click="operateMaterials(scope.row)">上架</el-button>
+                    <el-button type="text" size="small" @click="operateMaterials(scope.row)">下架</el-button>
+                    <el-button type="text" size="small" @click="editMaterials(scope.row)">编辑</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+        <el-pagination
+            class="pagination"
+            v-model:currentPage="materialsForm.currentPage"
+            v-model:page-size="materialsForm.pageSize"
+            :page-sizes="[10, 20, 30, 40]"
+            background
+            layout="total, prev, pager, next, sizes, jumper"
+            :total="materialsForm.total"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+        />
+        <el-dialog v-model="visibleForAdd" title="新建农资" width="50%">
+            <div class="dialog-body">
+                <el-form :model="addForm" label-width="120px" label-suffix=":">
+                    <el-form-item label="农资名称">
+                        <el-input v-model="addForm.title" clearable placeholder="请输入农资名称" />
+                    </el-form-item>
+                    <el-form-item label="农资类型">
+                        <el-select
+                            v-model="addForm.agriculturalCategoryId"
+                            class="form-select"
+                            placeholder="选择农资类型"
+                        >
+                            <el-option
+                                v-for="item in materialsTypeList"
+                                :label="item.title"
+                                :value="item.id"
+                                :key="item.id"
+                            />
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item label="参考单价">
+                        <el-input-number
+                            v-model="addForm.agriculturalPrice"
+                            class="form-input-number"
+                            :min="0"
+                            :precision="2"
+                            :controls="false"
+                        />元
+                    </el-form-item>
+                    <el-form-item label="规格">
+                        <div class="form-content">
+                            <el-input-number
+                                v-model="addForm.agriculturalCount"
+                                :min="0"
+                                :precision="2"
+                                :controls="false"
+                            />
+                            <el-select v-model="addForm.unitweightid" placeholder="请选择">
+                                <el-option
+                                    v-for="item in unitTypeList"
+                                    :label="item.title"
+                                    :value="item.id"
+                                    :key="item.id"
+                                />
+                            </el-select>
+                            <span class="line">/</span>
+                            <el-select v-model="addForm.unitmeasurementid" placeholder="请选择">
+                                <el-option
+                                    v-for="item in unitmeasurementList"
+                                    :label="item.title"
+                                    :value="item.id"
+                                    :key="item.id"
+                                />
+                            </el-select>
+                        </div>
+                    </el-form-item>
+                    <el-form-item label="厂家">
+                        <el-input v-model="addForm.manufacturers" placeholder="请输入厂家" />
+                    </el-form-item>
+                    <el-form-item label="农资banner图">
+                        <el-upload
+                            v-model:file-list="addForm.bannerList"
+                            action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+                            list-type="picture-card"
+                            :on-preview="handlePictureCardPreview"
+                            :on-remove="handleRemove"
+                        >
+                            <el-icon><Camera /></el-icon>
+                            添加样图
+                            <template #tip>
+                                <div class="tips">*仅支持jpg和png格式图片上传</div>
+                            </template>
+                        </el-upload>
+                    </el-form-item>
+                    <el-form-item label="农资图文介绍">
+                        <el-input
+                            v-model="addForm.richContent"
+                            :autosize="{ minRows: 3, maxRows: 5 }"
+                            type="textarea"
+                            placeholder="请输入"
+                        />
+                    </el-form-item>
+                </el-form>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="cancelAdd">取消</el-button>
+                    <el-button type="primary" @click="confirmAdd">确认</el-button>
+                </span>
+            </template>
+        </el-dialog>
+        <el-dialog v-model="visibleForCancel" title="提示" width="40%">
+            <div class="dialog-content">
+                <div class="left-view">
+                    <el-icon><WarningFilled /></el-icon>
+                </div>
+                <div class="right-view">
+                    <div class="title">
+                        <span class="title-item">提交人：13667316666</span>
+                        <span class="title-item">归属企业：湖南xxx农业公司</span>
+                    </div>
+                    <div class="desc">确定取消新建农资吗？</div>
+                </div>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="visibleForCancel = false">取消</el-button>
+                    <el-button type="primary" @click="confirm">确认</el-button>
+                </span>
+            </template>
+        </el-dialog>
+        <el-dialog v-model="visibleForDetail" title="农资详情" width="50%">
+            <div class="dialog-body">
+                <el-form :model="addForm" label-width="120px" label-suffix=":">
+                    <el-form-item label="农资名称"> 硝酸复合肥 </el-form-item>
+                    <el-form-item label="农资类型"> 化肥 </el-form-item>
+                    <el-form-item label="参考单价"> 150.00元 </el-form-item>
+                    <el-form-item label="规格"> 50公斤/袋 </el-form-item>
+                    <el-form-item label="厂家"> 内蒙古xxx肥料有限公司 </el-form-item>
+                    <el-form-item label="农资banner图"> </el-form-item>
+                    <el-form-item label="农资图文介绍">
+                        <el-input
+                            v-model="addForm.richContent"
+                            :autosize="{ minRows: 3, maxRows: 5 }"
+                            type="textarea"
+                            placeholder="请输入"
+                        />
+                    </el-form-item>
+                </el-form>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="visibleForDetail = false">取消</el-button>
+                    <el-button type="primary">确认</el-button>
+                </span>
+            </template>
+        </el-dialog>
+        <el-dialog v-model="visibleForOperate" title="农资上/下架" width="40%">
+            <div class="dialog-body">
+                <el-form label-width="120px" label-suffix=":">
+                    <el-form-item label="农资ID">
+                        {{ selectedMaterials && selectedMaterials.agriculturalNo }}
+                    </el-form-item>
+                    <el-form-item label="农资名称">
+                        {{ selectedMaterials && selectedMaterials.title }}
+                    </el-form-item>
+                    <el-form-item label="参考单价">
+                        {{ selectedMaterials && selectedMaterials.agriculturalPrice }}元
+                    </el-form-item>
+                    <el-form-item label="规格">
+                        {{ selectedMaterials && selectedMaterials.agriculturalCount
+                        }}{{ selectedMaterials && selectedMaterials.unitweight }}/{{
+                            selectedMaterials && selectedMaterials.unitmeasurement
+                        }}
+                    </el-form-item>
+                </el-form>
+            </div>
+            <template #footer>
+                <span class="dialog-footer">
+                    <el-button @click="visibleForOperate = false">取消</el-button>
+                    <el-button type="primary">确认</el-button>
+                </span>
+            </template>
+        </el-dialog>
+    </div>
+</template>
+
+<script>
+import {
+    materialsTypeListApi,
+    weightUnitListApi,
+    unitMeasurementListApi,
+    platformMaterialsListApi,
+    saveMaterialsApi,
+    updateMaterialsStatusApi,
+} from "../../../request/api.js";
+export default {
+    name: "MaterialsTab",
+    data() {
+        return {
+            materialsTypeList: [],
+            unitTypeList: [],
+            unitmeasurementList: [],
+            materialsList: [],
+            // 状态 -1 全部 0正常 1下架
+            statusList: [
+                {
+                    label: "全部",
+                    value: -1,
+                },
+                {
+                    label: "上架",
+                    value: 0,
+                },
+                {
+                    label: "下架",
+                    value: 1,
+                },
+            ],
+            materialsForm: {
+                keyWords: "",
+                status: -1,
+                currentPage: 1,
+                pageSize: 10,
+                total: 0,
+            },
+            visibleForAdd: false, // 是否展示新建农资弹框
+            addForm: {
+                title: "",
+                agriculturalCategoryId: "",
+                agriculturalPrice: undefined,
+                agriculturalCount: undefined,
+                unitweightid: "",
+                unitmeasurementid: "",
+                manufacturers: "",
+                bannerList: "",
+                richContent: "",
+            },
+            visibleForCancel: false, // 是否展示取消新建确认弹框
+            visibleForDetail: false, // 是否展示农资详情弹框
+            visibleForOperate: false, // 是否展示农资上下架弹框
+            selectedMaterials: null, // 已选择的农资
+        };
+    },
+    mounted() {
+        this.getMaterialTypeList();
+        this.getUnitTypeList();
+        this.getUnitmeasurementList();
+        this.getMaterialsList();
+    },
+    methods: {
+        // 获取农资类型枚举值
+        getMaterialTypeList() {
+            const params = {};
+            return materialsTypeListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.materialsTypeList = res.data;
+                }
+            });
+        },
+        // 获取农资类型枚举值
+        getUnitTypeList() {
+            const params = {};
+            return weightUnitListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.unitTypeList = res.data;
+                }
+            });
+        },
+        // 获取数量单位枚举值
+        getUnitmeasurementList() {
+            const params = {};
+            unitMeasurementListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.unitmeasurementList = res.data;
+                }
+            });
+        },
+        // 获取平台农资列表
+        getMaterialsList() {
+            const params = {
+                pageNum: this.materialsForm.currentPage,
+                pageSize: this.materialsForm.pageSize,
+                param: {
+                    id: 0,
+                    keyWord: this.materialsForm.keyWords,
+                    status: this.materialsForm.status,
+                },
+            };
+            return platformMaterialsListApi(params).then((res) => {
+                this.materialsForm.total = res.total || 0;
+                if (res && res.data) {
+                    this.materialsList = res.data.map((item) => {
+                        return item;
+                    });
+                } else {
+                    this.materialsList = [];
+                }
+            });
+        },
+        // 保存农资
+        saveMaterials() {
+            const params = {
+                agriculturalBo: {
+                    agriculturalCategory: "",
+                    agriculturalCategoryId: this.addForm.agriculturalCategoryId,
+                    agriculturalCount: this.addForm.agriculturalCount,
+                    agriculturalNo: "",
+                    agriculturalPrice: this.addForm.agriculturalPrice,
+                    definition: 0,
+                    id: 0,
+                    manufacturers: this.addForm.manufacturers,
+                    title: this.addForm.title,
+                    unitmeasurement: "",
+                    unitmeasurementid: this.addForm.unitmeasurementid,
+                    unitweight: "",
+                    unitweightid: this.addForm.unitweightid,
+                    weight: 0,
+                },
+                bannerList: this.addForm.bannerList,
+                richContent: this.addForm.richContent,
+            };
+            const typeItem = this.materialsTypeList.find((item) => item.id === this.addForm.agriculturalCategoryId);
+            const unitItem = this.unitTypeList.find((item) => item.id === this.addForm.unitweightid);
+            const unitmeasurementItem = this.unitmeasurementList.find(
+                (item) => item.id === this.addForm.unitmeasurementid
+            );
+            this.addForm.agriculturalCategory = typeItem && typeItem.title;
+            this.addForm.unitmeasurement = unitmeasurementItem && unitmeasurementItem.title;
+            this.addForm.unitweight = unitItem && unitItem.title;
+            return saveMaterialsApi(params).then((res) => {
+                if (res && res.code === "200") {
+                    this.$message.success("操作成功");
+                    this.getMaterialsList();
+                } else {
+                    this.$message.error(res.message || "操作失败");
+                }
+            });
+        },
+        updateMaterialsStatus() {},
+        handleSizeChange() {
+            this.materialsForm.currentPage = 1;
+            this.getMaterialsList();
+        },
+        handleCurrentChange() {
+            this.getMaterialsList();
+        },
+        handlePictureCardPreview() {},
+        handleRemove() {},
+        // 取消添加
+        cancelAdd() {
+            this.visibleForCancel = true;
+        },
+        // 确定添加
+        confirmAdd() {
+            this.saveMaterials();
+            this.visibleForCancel = false;
+            this.visibleForAdd = false;
+            this.addForm = {
+                title: "",
+                agriculturalCategoryId: "",
+                agriculturalPrice: undefined,
+                agriculturalCount: undefined,
+                unitweightid: "",
+                unitmeasurementid: "",
+                manufacturers: "",
+                bannerList: "",
+                richContent: "",
+            };
+        },
+        // 确定取消新建
+        confirm() {
+            this.visibleForCancel = false;
+            this.visibleForAdd = false;
+            this.addForm = {
+                title: "",
+                agriculturalCategoryId: "",
+                agriculturalPrice: undefined,
+                agriculturalCount: undefined,
+                unitweightid: "",
+                unitmeasurementid: "",
+                manufacturers: "",
+                bannerList: "",
+                richContent: "",
+            };
+        },
+        // 新建农资
+        addMaterials() {
+            this.visibleForAdd = true;
+        },
+        // 编辑农资
+        editMaterials(row) {
+            this.selectedMaterials = row;
+            this.visibleForAdd = true;
+        },
+        // 农资上下架
+        operateMaterials(row) {
+            this.selectedMaterials = row;
+            this.visibleForOperate = true;
+        },
+        // 查看农资详情
+        viewDetail(row) {
+            this.selectedMaterials = row;
+            this.visibleForDetail = true;
+        },
+    },
+};
+</script>
+
+<style lang="less">
+.materials-tab-wrapper {
+    .form-select {
+        width: 100%;
+    }
+    .form-input-number {
+        width: 90%;
+    }
+    .form-content {
+        display: flex;
+        align-items: center;
+        .line {
+            margin: 0 10px;
+        }
+    }
+    .tips {
+        color: #c4c4c4;
+    }
+    .pagination {
+        margin-top: 30px;
+    }
+    .dialog-content {
+        display: flex;
+        align-items: center;
+        .left-view {
+            font-size: 40px;
+            color: #f59103;
+        }
+        .right-view {
+            margin-left: 20px;
+            .title {
+                font-size: 14px;
+                color: #f59103;
+                &-item {
+                    margin-right: 20px;
+                }
+            }
+            .desc {
+                margin-top: 5px;
+            }
+        }
+    }
+}
+</style>

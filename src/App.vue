@@ -22,4 +22,12 @@ export default {
 
 <style lang="less">
 @import "@/assets/css/app.less";
+html,
+body,
+#app {
+    height: 100%;
+}
+body {
+    background: #f2f4f7;
+}
 </style>
