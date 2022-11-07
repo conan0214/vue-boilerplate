@@ -1,5 +1,12 @@
 import request from "./index";
 
+const uploadApi = `https://erp.deepberry.cn/api/v1/adam/upload`;
+
+// 栽培方式列表
+const growthTypeListApi = function (params) {
+    return request.post("/api/v1/adam/garden/getGrowGrowth", params);
+};
+
 // 农资类型枚举值
 const materialsTypeListApi = function (params) {
     return request.post("/api/v1/adam/farm/getAgriculturalCategory", params);
@@ -55,7 +62,84 @@ const plantModelListApi = function (params) {
     return request.post("/api/v1/adam/adminGrowModel/list", params);
 };
 
+// 种植模型详情
+const plantModelDetailApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/list", params);
+};
+
+// 停止种植模型
+const stopPlantModelApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/stopModel", params);
+};
+
+// 保存生长阶段
+const saveGrowthStageApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/saveGrowthStage", params);
+};
+
+// 保存种植建议
+const savePlantSuggestionApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/savePlantReferenceModel", params);
+};
+
+// 保存农事指导
+const saveFarmGuideApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/savePlantOperationGuidance", params);
+};
+
+// 保存防治病虫害指导
+const saveCureGuideApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/savePlantPreventionGuidance", params);
+};
+
+// 生长阶段详情
+const growthStageDetailApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getGrowthStageById", params);
+};
+
+// 农事指导详情
+const farmGuideDetailApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getPlantOperationGuidanceById", params);
+};
+
+// 防治病虫害指导详情
+const cureGuideDetailApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getPlantPreventionGuidanceById", params);
+};
+
+// 种植建议详情
+const suggestionDetailApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getPlantReferenceModelById", params);
+};
+
+// 生长阶段列表
+const growthStageListApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getGrowthStage", params);
+};
+
+// 种植建议列表
+const suggestionListApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getPlantReferenceModelList", params);
+};
+
+// 农事指导列表
+const farmGuideListApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getPlantOperationGuidanceList", params);
+};
+
+// 防治病虫害指导列表
+const cureGuideListApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getPlantPreventionGuidanceList", params);
+};
+
+// 保存种植模型
+const savePlantModelApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/saveGrowModel", params);
+};
+
 export {
+    uploadApi,
+    growthTypeListApi,
     materialsTypeListApi,
     weightUnitListApi,
     unitMeasurementListApi,
@@ -67,4 +151,19 @@ export {
     materialsDetailApi,
     updateMaterialsStatusApi,
     plantModelListApi,
+    stopPlantModelApi,
+    saveGrowthStageApi,
+    savePlantSuggestionApi,
+    saveFarmGuideApi,
+    saveCureGuideApi,
+    growthStageDetailApi,
+    farmGuideDetailApi,
+    cureGuideDetailApi,
+    suggestionDetailApi,
+    plantModelDetailApi,
+    growthStageListApi,
+    suggestionListApi,
+    farmGuideListApi,
+    cureGuideListApi,
+    savePlantModelApi,
 };

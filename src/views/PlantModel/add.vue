@@ -11,15 +11,14 @@
         <div class="content">
             <el-form :inline="true" :model="form" class="form">
                 <el-form-item label="种植类型">
-                    <el-input v-model="form.type" placeholder="请输入种植类型" />
+                    <el-input v-model="form.categoryTitle" placeholder="请输入种植类型" />
                 </el-form-item>
                 <el-form-item label="种植品种">
-                    <el-input v-model="form.variety" placeholder="请输入种植品种" />
+                    <el-input v-model="form.varietyTitle" placeholder="请输入种植品种" />
                 </el-form-item>
                 <el-form-item label="培育方式">
-                    <el-select v-model="form.region" placeholder="请选择培育方式">
-                        <el-option label="有土栽培" value="shanghai" />
-                        <el-option label="无土栽培" value="beijing" />
+                    <el-select v-model="form.growthId" placeholder="请选择培育方式">
+                        <el-option v-for="item in growthTypeList" :label="item.title" :value="item.id" :key="item.id" />
                     </el-select>
                 </el-form-item>
             </el-form>
@@ -30,55 +29,45 @@
                         <span class="tips">模型支持左右移动</span>
                     </div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus">添加</el-button>
+                        <el-button plain type="primary" icon="CirclePlus" @click="openAddGrowthStageDialog"
+                            >添加</el-button
+                        >
                     </div>
                 </div>
                 <div class="card-list">
-                    <div class="card-item">
+                    <div v-for="(item, index) in growthStageList" class="card-item" :key="index">
                         <div class="card-header">
                             <div class="card-header-title">
-                                <div class="left-view">阶段一：播种到萌芽</div>
+                                <div class="left-view">阶段{{ index + 1 }}：{{ item.phaseName }}</div>
                                 <div class="right-view">
-                                    <el-icon class="icon"><Edit /></el-icon>
-                                    <el-icon class="icon"><Delete /></el-icon>
+                                    <el-icon class="icon" @click="openAddGrowthStageDialog(item)"><Edit /></el-icon>
+                                    <el-icon class="icon" @click="delGrowthStage(index)"><Delete /></el-icon>
                                 </div>
                             </div>
                             <div class="card-header-img">
-                                <el-image class="img" src="" fit="cover" />
+                                <el-image
+                                    v-for="child in item.imgList"
+                                    class="img"
+                                    :src="child"
+                                    :key="child"
+                                    fit="cover"
+                                />
                             </div>
                         </div>
                         <div class="card-table">
                             <div class="card-table-row">
                                 <div class="left-view">参数名</div>
-                                <div class="right-view">参数名</div>
+                                <div class="right-view">参数值</div>
                             </div>
-                            <div class="card-table-row">
-                                <div class="left-view">光合积分</div>
-                                <div class="right-view">0-50μmol</div>
-                            </div>
-                            <div class="card-table-row">
-                                <div class="left-view">积温</div>
-                                <div class="right-view">0-150 °C</div>
-                            </div>
-                            <div class="card-table-row">
-                                <div class="left-view">单株灌溉量</div>
-                                <div class="right-view">0-50ml</div>
-                            </div>
-                            <div class="card-table-row">
-                                <div class="left-view">株高</div>
-                                <div class="right-view">0-2cm</div>
-                            </div>
-                            <div class="card-table-row">
-                                <div class="left-view">叶面积</div>
-                                <div class="right-view">0-1 cm²</div>
-                            </div>
-                            <div class="card-table-row">
-                                <div class="left-view">单株重量</div>
-                                <div class="right-view">0-50 g</div>
-                            </div>
-                            <div class="card-table-row">
-                                <div class="left-view">种植时间</div>
-                                <div class="right-view">0-5 day</div>
+                            <div
+                                v-for="(child, index) in item.growPlantModelDetailBos"
+                                class="card-table-row"
+                                :key="index"
+                            >
+                                <div class="left-view">{{ child.parameterName }}</div>
+                                <div class="right-view">
+                                    {{ child.leastValue }}-{{ child.maxValue }}{{ child.unit }}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -91,7 +80,7 @@
                         <span class="tips">模型支持上下移动</span>
                     </div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus">添加</el-button>
+                        <el-button plain type="primary" icon="CirclePlus" @click="openPlantSuggestion">添加</el-button>
                     </div>
                 </div>
                 <el-table class="section-table" :data="tableData">
@@ -136,10 +125,10 @@
                         </template>
                     </el-table-column>
                     <el-table-column label="操作">
-                        <template>
+                        <template #default="scope">
                             <div class="btn">
-                                <el-icon class="icon"><Edit /></el-icon>
-                                <el-icon class="icon"><Delete /></el-icon>
+                                <el-icon class="icon" @click="openPlantSuggestion(scope.row)"><Edit /></el-icon>
+                                <el-icon class="icon" @click="delPlantSuggestion(scope.$index)"><Delete /></el-icon>
                             </div>
                         </template>
                     </el-table-column>
@@ -149,21 +138,21 @@
                 <div class="section-title">
                     <div class="left-view">农事操作指导</div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus">添加</el-button>
+                        <el-button plain type="primary" icon="CirclePlus" @click="openFarmGuideDialog">添加</el-button>
                     </div>
                 </div>
                 <div class="guide-list">
-                    <div class="guide-item">
-                        <div class="guide-item-img">
-                            <el-image class="img" src="" fit="cover" />
+                    <div v-for="(item, index) in farmGuideList" class="guide-item" :key="index">
+                        <div v-for="child in item.imgList" class="guide-item-img" :key="child.url">
+                            <el-image class="img" :src="child.url" fit="cover" />
                             <div class="btn-play"></div>
                             <div class="btns">
-                                <el-icon class="icon"><Edit /></el-icon>
-                                <el-icon class="icon"><Delete /></el-icon>
+                                <el-icon class="icon" @click="openFarmGuideDialog(item)"><Edit /></el-icon>
+                                <el-icon class="icon" @click="delFarmGuide(index)"><Delete /></el-icon>
                             </div>
                         </div>
-                        <div class="title">通风降温</div>
-                        <div class="desc-div"></div>
+                        <div class="title">{{ item.title }}</div>
+                        <div class="desc-div">{{ item.text }}</div>
                     </div>
                 </div>
             </div>
@@ -171,17 +160,23 @@
                 <div class="section-title">
                     <div class="left-view">病虫害防治</div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus">添加</el-button>
+                        <el-button plain type="primary" icon="CirclePlus" @click="openCureGuideDialog">添加</el-button>
                     </div>
                 </div>
                 <div class="guide-list">
-                    <div class="guide-item">
+                    <div v-for="(item, index) in cureGuideList" class="guide-item" :key="index">
                         <div class="guide-item-img">
-                            <el-image class="img" src="" fit="cover" />
+                            <el-image
+                                v-for="child in item.imgList"
+                                class="img"
+                                :src="child.url"
+                                fit="cover"
+                                :key="child.url"
+                            />
                             <div class="btn-play"></div>
                             <div class="btns">
-                                <el-icon class="icon"><Edit /></el-icon>
-                                <el-icon class="icon"><Delete /></el-icon>
+                                <el-icon class="icon" @click="openCureGuideDialog(item)"><Edit /></el-icon>
+                                <el-icon class="icon" @click="delCureGuide(index)"><Delete /></el-icon>
                             </div>
                         </div>
                         <div class="title">通风降温</div>
@@ -190,16 +185,16 @@
                 </div>
             </div>
         </div>
-        <el-dialog v-model="visibleForModel" title="添加生长阶段" width="50%" @close="cancelAddModel">
+        <el-dialog v-model="visibleForModel" title="添加生长阶段" width="50%" @close="closeAddGrowthStageDialog">
             <div class="dialog-body">
                 <el-form :model="modelForm" label-width="80px" label-suffix=":">
                     <el-form-item label="阶段名称">
-                        <el-input v-model="modelForm.name" clearable placeholder="请输入农资名称" />
+                        <el-input v-model="modelForm.phaseName" clearable placeholder="请输入阶段名称" />
                     </el-form-item>
                     <el-form-item label="参考图">
                         <el-upload
                             v-model:file-list="modelForm.imgList"
-                            action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+                            :action="uploadApi"
                             list-type="picture-card"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
@@ -210,16 +205,20 @@
                     </el-form-item>
                     <el-form-item label="参考指标"> </el-form-item>
                     <div class="standard-list">
-                        <div v-for="(item, index) in modelForm.standardList" class="standard-item" :key="index">
+                        <div
+                            v-for="(item, index) in modelForm.growPlantModelDetailBos"
+                            class="standard-item"
+                            :key="index"
+                        >
                             <div class="standard-item-content">
                                 <div class="label">参数名：</div>
-                                <el-input class="input" v-model="item.name" placeholder="请输入名称" />
+                                <el-input class="input" v-model="item.parameterName" placeholder="请输入名称" />
                             </div>
                             <div class="standard-item-content">
                                 <div class="label">参考值：</div>
                                 <el-input-number
                                     class="input-number"
-                                    v-model="item.min"
+                                    v-model="item.leastValue"
                                     :min="0"
                                     :controls="false"
                                     placeholder="最小值"
@@ -227,7 +226,7 @@
                                 <span class="line">-</span>
                                 <el-input-number
                                     class="input-number"
-                                    v-model="item.max"
+                                    v-model="item.maxValue"
                                     :min="0"
                                     :controls="false"
                                     placeholder="最大值"
@@ -244,8 +243,8 @@
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="cancelAddModel">取消</el-button>
-                    <el-button type="primary">保存</el-button>
+                    <el-button @click="closeAddGrowthStageDialog">取消</el-button>
+                    <el-button type="primary" @click="saveGrowthStage">保存</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -268,7 +267,7 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForSuggestion" title="添加种植建议" width="50%" @close="cancelAddSuggestion">
+        <el-dialog v-model="visibleForSuggestion" title="添加种植建议" width="50%">
             <div class="dialog-body">
                 <div class="card-table">
                     <div class="card-table-row">
@@ -333,18 +332,18 @@
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="cancelAddModel">取消</el-button>
+                    <el-button>取消</el-button>
                     <el-button type="primary">保存</el-button>
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForFarmGuide" title="添加种植建议" width="50%" @close="cancelAddFarmGuide">
+        <el-dialog v-model="visibleForFarmGuide" title="添加种植建议" width="50%" @close="closeFarmGuideDialog">
             <div class="dialog-body">
                 <el-form :model="farmGuideForm" label-width="100px" label-suffix=":">
                     <el-form-item label="参考视频">
                         <el-upload
                             v-model:file-list="farmGuideForm.imgList"
-                            action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+                            :action="uploadApi"
                             list-type="picture-card"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
@@ -358,7 +357,7 @@
                     </el-form-item>
                     <el-form-item label="内容标签">
                         <el-input
-                            v-model="suggestionForm.tag"
+                            v-model="farmGuideForm.text"
                             clearable
                             :autosize="{ minRows: 3, maxRows: 5 }"
                             placeholder="如：#增加光照"
@@ -369,18 +368,18 @@
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="cancelAddModel">取消</el-button>
-                    <el-button type="primary">保存</el-button>
+                    <el-button @click="closeFarmGuideDialog">取消</el-button>
+                    <el-button type="primary" @click="saveFarmGuide">保存</el-button>
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForCureGuide" title="添加病虫害防治知道" width="50%" @close="cancelAddCureGuide">
+        <el-dialog v-model="visibleForCureGuide" title="添加病虫害防治知道" width="50%" @close="closeCureGuideDialog">
             <div class="dialog-body">
                 <el-form :model="cureGuideForm" label-width="100px" label-suffix=":">
                     <el-form-item label="参考视频">
                         <el-upload
                             v-model:file-list="cureGuideForm.imgList"
-                            action="https://run.mocky.io/v3/9d059bf9-4660-45f2-925d-ce80ad6c4d15"
+                            :action="uploadApi"
                             list-type="picture-card"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
@@ -394,7 +393,7 @@
                     </el-form-item>
                     <el-form-item label="内容标签">
                         <el-input
-                            v-model="cureGuideForm.tag"
+                            v-model="cureGuideForm.text"
                             clearable
                             :autosize="{ minRows: 3, maxRows: 5 }"
                             placeholder="如：#增加光照"
@@ -405,8 +404,8 @@
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="cancelAddModel">取消</el-button>
-                    <el-button type="primary">保存</el-button>
+                    <el-button @click="closeCureGuideDialog">取消</el-button>
+                    <el-button type="primary" @click="saveCureGuide">保存</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -414,24 +413,47 @@
 </template>
 
 <script>
+import {
+    uploadApi,
+    saveGrowthStageApi,
+    savePlantSuggestionApi,
+    saveFarmGuideApi,
+    saveCureGuideApi,
+    growthStageList,
+    suggestionListApi,
+    farmGuideListApi,
+    cureGuideListApi,
+    savePlantModelApi,
+    growthStageDetailApi,
+    farmGuideDetailApi,
+    cureGuideDetailApi,
+    suggestionDetailApi,
+    plantModelDetailApi,
+    growthTypeListApi,
+} from "../../request/api.js";
 export default {
     name: "Add",
     data() {
         return {
+            uploadApi,
+            growthTypeList: [], // 栽培方式
             form: {
-                type: "",
-                variety: "",
+                categoryTitle: "",
+                varietyTitle: "",
+                growthId: "",
             },
+            growthStageList: [], // 植物生长阶段列表
+            selectedGrowthStage: null, // 已选择的生长阶段
             tableData: [],
             modelForm: {
                 // 添加、编辑模型
-                name: "",
+                phaseName: "",
                 imgList: [],
-                standardList: [
+                growPlantModelDetailBos: [
                     {
-                        name: "",
-                        min: undefined,
-                        max: undefined,
+                        parameterName: "",
+                        leastValue: undefined,
+                        maxValue: undefined,
                         unit: "",
                     },
                 ],
@@ -447,20 +469,68 @@ export default {
             farmGuideForm: {
                 imgList: [],
                 title: "",
-                tag: "",
+                text: "",
             },
+            farmGuideList: [],
+            selectedFarmGuide: null, // 已选的农事指导
             visibleForCureGuide: false, // 是否展示添加、编辑病虫害防治指导的弹框
             cureGuideForm: {
                 imgList: [],
                 title: "",
-                tag: "",
+                text: "",
             },
+            cureGuideList: [],
+            selectedCureGuide: null, // 已选的防治病虫害指导
         };
     },
+    mounted() {
+        this.getGrowthTypeList();
+    },
     methods: {
+        // 栽培方式列表
+        getGrowthTypeList() {
+            const params = {};
+            growthTypeListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.growthTypeList = res.data;
+                }
+            });
+        },
+        goBack() {
+            this.$router.back();
+        },
+        // 打开添加生长阶段弹框
+        openAddGrowthStageDialog(row) {
+            if (row) {
+                this.selectedGrowthStage = row;
+            }
+            this.visibleForModel = true;
+        },
+        // 关闭添加生长阶段弹框
+        closeAddGrowthStageDialog() {
+            this.visibleForModel = false;
+            this.modelForm = {
+                // 添加、编辑模型
+                phaseName: "",
+                imgList: [],
+                growPlantModelDetailBos: [
+                    {
+                        parameterName: "",
+                        leastValue: undefined,
+                        maxValue: undefined,
+                        unit: "",
+                    },
+                ],
+            };
+            this.selectedGrowthStage = null;
+        },
+        // 删除生长阶段
+        delGrowthStage(index) {
+            this.growthStageList.splice(index, 1);
+        },
         // 添加参考指标
         addStandard() {
-            this.modelForm.standardList.push({
+            this.modelForm.growPlantModelDetailBos.push({
                 name: "",
                 min: undefined,
                 max: undefined,
@@ -469,24 +539,141 @@ export default {
         },
         // 删除参考指标
         delStandard(index) {
-            this.modelForm.standardList.splice(index, 1);
+            this.modelForm.growPlantModelDetailBos.splice(index, 1);
         },
-        // 取消添加
-        cancelAddModel() {
-            this.visibleForModel = false;
-            this.modelForm = {
-                // 添加、编辑模型
-                name: "",
-                imgList: [],
-                standardList: [
-                    {
-                        name: "",
-                        min: undefined,
-                        max: undefined,
-                        unit: "",
-                    },
-                ],
+        // 保存生长阶段
+        saveGrowthStage() {
+            const params = {
+                createName: "",
+                growModelId: "",
+                growPlantModelDetailBos: this.modelForm.growPlantModelDetailBos,
+                id: 0,
+                image: "",
+                phaseName: this.modelForm.phaseName,
             };
+            if (this.modelForm.imgList[0]) {
+                const response = this.modelForm.imgList[0].response;
+                params.video = response && response.data && response.data.imageUrl;
+            }
+            return saveGrowthStageApi(params).then((res) => {
+                if (res && res.code === "200") {
+                    this.$message.success("保存成功");
+                    this.growthStageList.push({
+                        ...this.modelForm,
+                    });
+                    this.closeAddGrowthStageDialog();
+                } else {
+                    this.$message.error(res.message || "保存失败");
+                }
+            });
+        },
+        // 打开添加种植参考建议弹框
+        openPlantSuggestion(row) {
+            console.log(row);
+        },
+        // 删除种植参考建议
+        delPlantSuggestion(index) {
+            console.log(index);
+        },
+        // 打开添加农事指导弹框
+        openFarmGuideDialog(row) {
+            this.selectedFarmGuide = row;
+            this.visibleForFarmGuide = true;
+        },
+        // 关闭添加农事指导弹框
+        closeFarmGuideDialog() {
+            this.visibleForFarmGuide = false;
+            this.selectedFarmGuide = null;
+        },
+        // 删除农事指导
+        delFarmGuide(index) {
+            this.farmGuideList.splice(index, 1);
+        },
+        // 保存农事指导
+        saveFarmGuide() {
+            const params = {
+                growModelId: "",
+                id: 0,
+                text: this.farmGuideForm.text,
+                title: this.farmGuideForm.title,
+                video: "",
+            };
+            if (this.farmGuideForm.imgList[0]) {
+                const response = this.farmGuideForm.imgList[0].response;
+                params.video = response && response.data && response.data.imageUrl;
+            }
+            return saveFarmGuideApi(params).then((res) => {
+                if (res && res.code === "200") {
+                    this.$message.success("保存成功");
+                    this.farmGuideList.push({
+                        ...this.farmGuideForm,
+                    });
+                    this.closeFarmGuideDialog();
+                } else {
+                    this.$message.error(res.message || "保存失败");
+                }
+            });
+        },
+        // 打开添加农事指导弹框
+        openCureGuideDialog(row) {
+            this.selectedCureGuide = row;
+            this.visibleForCureGuide = true;
+        },
+        // 关闭添加农事指导弹框
+        closeCureGuideDialog() {
+            this.visibleForCureGuide = false;
+            this.selectedCureGuide = null;
+        },
+        // 保存防治病虫害指导
+        saveCureGuide() {
+            const params = {
+                growModelId: "",
+                id: 0,
+                text: this.cureGuideForm.text,
+                title: this.cureGuideForm.title,
+                video: "",
+            };
+            if (this.cureGuideForm.imgList[0]) {
+                const response = this.cureGuideForm.imgList[0].response;
+                params.video = response && response.data && response.data.imageUrl;
+            }
+            return saveCureGuideApi(params).then((res) => {
+                if (res && res.code === "200") {
+                    this.$message.success("保存成功");
+                    this.cureGuideList.push({
+                        ...this.cureGuideForm,
+                    });
+                    this.closeCureGuideDialog();
+                } else {
+                    this.$message.error(res.message || "保存失败");
+                }
+            });
+        },
+        // 删除防治病虫害指导
+        delCureGuide(index) {
+            this.cureGuideList.splice(index, 1);
+        },
+        // 保存种植模型
+        savePlantMode() {
+            const params = {
+                categoryTitle: this.form.categoryTitle,
+                growAdviseIds: "",
+                growModelIds: "",
+                growOperationGuideIds: "",
+                growPreventionGuideIds: "",
+                growthId: this.form.growthId,
+                growthName: "",
+                id: 0,
+                varietyTitle: this.form.varietyTitle,
+            };
+            return savePlantModelApi(params).then((res) => {
+                if (res && res.code === "200") {
+                    this.$message.success("保存成功");
+                    this.$router.back();
+                } else {
+                    this.$message.error(res.message || "保存失败");
+                }
+            });
         },
     },
 };

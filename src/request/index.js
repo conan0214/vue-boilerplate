@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Message } from "element-plus";
+import { ElMessage } from "element-plus";
 
 // 创建一个独立的axios实例
 const request = axios.create({
@@ -22,7 +22,7 @@ request.interceptors.response.use(
         return res;
     },
     () => {
-        Message.error("网络请求异常，请稍后重试!");
+        ElMessage.error("网络请求异常，请稍后重试!");
     }
 );
 export default request;

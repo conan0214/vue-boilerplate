@@ -8,7 +8,7 @@
                     <el-option v-for="item in statusList" :label="item.label" :value="item.value" :key="item.value" />
                 </el-select>
                 <el-button type="primary">搜索</el-button>
-                <el-button type="primary" icon="CirclePlus">创建模型</el-button>
+                <el-button type="primary" icon="CirclePlus" @click="addPlantModel">创建模型</el-button>
             </div>
         </div>
         <el-tabs v-model="activeName">
@@ -53,17 +53,23 @@
                 </div>
                 <div class="right-view">
                     <div class="title">
-                        <span class="title-item">植物种类：树莓</span>
-                        <span class="title-item">植物品种：红宝玉</span>
-                        <span class="title-item">栽培方式：有土栽培</span>
+                        <span class="title-item"
+                            >植物种类：{{ selectedPlantModel && selectedPlantModel.categoryTitle }}</span
+                        >
+                        <span class="title-item"
+                            >植物品种：{{ selectedPlantModel && selectedPlantModel.varietyTitle }}</span
+                        >
+                        <span class="title-item"
+                            >栽培方式：{{ selectedPlantModel && selectedPlantModel.growthName }}</span
+                        >
                     </div>
                     <div class="desc">确定停用此任务吗？</div>
                 </div>
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="visibleForStop = false">取消</el-button>
-                    <el-button type="primary">确认</el-button>
+                    <el-button @click="closeStopDialog">取消</el-button>
+                    <el-button type="primary" @click="stopPlantModel">确认</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -71,7 +77,7 @@
 </template>
 
 <script>
-import { plantModelListApi } from "../../request/api.js";
+import { plantModelListApi, stopPlantModelApi } from "../../request/api.js";
 export default {
     name: "PlantModel",
     data() {
@@ -101,6 +107,7 @@ export default {
                 total: 0,
             },
             visibleForStop: false, // 是否展示停用弹框
+            selectedPlantModel: null, // 已选择的种植模型
         };
     },
     mounted() {
@@ -131,11 +138,48 @@ export default {
                 }
             });
         },
-        handleSizeChange() {},
-        handleCurrentChange() {},
+        // 停用种植模型
+        stopPlantModel() {
+            const params = {
+                categoryTitle: this.selectedPlantModel.categoryTitle,
+                createName: this.selectedPlantModel.createName,
+                growthId: this.selectedPlantModel.growthId,
+                growthName: this.selectedPlantModel.growthName,
+                id: this.selectedPlantModel.id,
+                state: this.selectedPlantModel.state,
+                updateTime: this.selectedPlantModel.updateTime,
+                varietyTitle: this.selectedPlantModel.varietyTitle,
+            };
+            return stopPlantModelApi(params).then((res) => {
+                if (res && res.code === "200") {
+                    this.$message.success("操作成功");
+                    this.closeStopDialog();
+                    this.getPlantModelList();
+                } else {
+                    this.$message.error(res.message || "操作失败");
+                }
+            });
+        },
+        handleSizeChange() {
+            this.plantModelForm.currentPage = 1;
+            this.getPlantModelList();
+        },
+        handleCurrentChange() {
+            this.getPlantModelList();
+        },
         // 打开停用弹框
-        openStopDialog() {
+        openStopDialog(row) {
+            this.selectedPlantModel = row;
             this.visibleForStop = true;
+        },
+        // 关闭停用弹框
+        closeStopDialog() {
+            this.visibleForStop = false;
+            this.selectedPlantModel = null;
+        },
+        // 创建种植模型
+        addPlantModel() {
+            this.$router.push("/add");
         },
     },
 };
