@@ -6,6 +6,7 @@
                     v-model="purchaseOrderForm.keyWords"
                     class="search-input"
                     placeholder="订单号/提交人/归属企业/农资名称"
+                    clearable
                 />
                 <div class="search-item">
                     <div class="search-item-lable">跟进状态</div>
@@ -21,7 +22,12 @@
                 </div>
             </template>
             <template v-else>
-                <el-input v-model="materialsForm.keyWords" class="search-input" placeholder="农资ID/农资名称" />
+                <el-input
+                    v-model="materialsForm.keyWords"
+                    class="search-input"
+                    placeholder="农资ID/农资名称"
+                    clearable
+                />
                 <div class="search-item">
                     <div class="search-item-lable">状态</div>
                     <el-select v-model="materialsForm.status" class="search-select" placeholder="请选择">
@@ -32,14 +38,14 @@
                             :key="index"
                         />
                     </el-select>
-                    <el-button type="primary">搜索</el-button>
+                    <el-button type="primary" @click="searchMaterials">搜索</el-button>
                     <el-button type="primary" icon="CirclePlus" @click="addMaterials">新建农资</el-button>
                 </div>
             </template>
         </div>
         <el-tabs v-model="activeName">
             <el-tab-pane label="采购订单" name="purchaseOrder">
-                <el-table :data="purchaseOrderList" style="width: 100%">
+                <el-table v-loading="loading" :data="purchaseOrderList" style="width: 100%">
                     <el-table-column type="index"></el-table-column>
                     <el-table-column label="订单号" prop="orderUuid" width="180"></el-table-column>
                     <el-table-column label="订单内容" width="300">
@@ -66,7 +72,7 @@
                     <el-table-column label="归属企业" prop="userCompany" width="180"></el-table-column>
                     <el-table-column label="更进状态" prop="orderStatusText" width="180"></el-table-column>
                     <el-table-column label="最新更进" prop="followText" width="180"></el-table-column>
-                    <el-table-column label="操作" width="300">
+                    <el-table-column label="操作" width="340">
                         <template #default="scope">
                             <el-button type="text" size="small" @click="openOrderDetailDialog(scope.row)"
                                 >查看详情</el-button
@@ -94,7 +100,7 @@
                 />
             </el-tab-pane>
             <el-tab-pane label="农资库" name="agricultureMaterials">
-                <MaterialsTab ref="materialsTab"></MaterialsTab>
+                <MaterialsTab ref="materialsTab" :searchForm="materialsForm"></MaterialsTab>
             </el-tab-pane>
         </el-tabs>
         <el-dialog v-model="visibleForFinishOrder" title="完成订单" width="50%">
@@ -140,25 +146,39 @@
         <el-dialog v-model="visibleForOrderDetail" title="订单详情" width="50%">
             <div class="dialog-body">
                 <el-descriptions :column="2">
-                    <el-descriptions-item label="订单号:">ID124555454</el-descriptions-item>
-                    <el-descriptions-item label="提交时间:">2022.05.25 10:45:12</el-descriptions-item>
-                    <el-descriptions-item label="提交人:">13367890342</el-descriptions-item>
-                    <el-descriptions-item label="归属企业：">湖南xxx农业公司</el-descriptions-item>
+                    <el-descriptions-item label="订单号:">{{
+                        selectedOrder && selectedOrder.orderUuid
+                    }}</el-descriptions-item>
+                    <el-descriptions-item label="提交时间:">{{
+                        selectedOrder && selectedOrder.orderTime
+                    }}</el-descriptions-item>
+                    <el-descriptions-item label="提交人:">{{
+                        selectedOrder && selectedOrder.userName
+                    }}</el-descriptions-item>
+                    <el-descriptions-item label="归属企业：">{{
+                        selectedOrder && selectedOrder.userCompany
+                    }}</el-descriptions-item>
                 </el-descriptions>
                 <div class="list">
-                    <div class="item">
-                        <div class="item-title">农资ID：123456</div>
+                    <div v-for="(item, index) in selectedOrder.agriculturalCartBos" class="item" :key="index">
+                        <div class="item-title">农资ID：{{ item.agriculturalBo.agriculturalNo }}</div>
                         <div class="item-desc title">
-                            <div class="left-view">硝酸复合肥</div>
-                            <div class="right-view price">¥150.00元</div>
+                            <div class="left-view">{{ item.agriculturalBo.title }}</div>
+                            <div class="right-view price">¥{{ item.agriculturalBo.agriculturalPrice }}元</div>
                         </div>
                         <div class="item-desc">
-                            <div class="left-view type">化肥</div>
-                            <div class="right-view count">20袋（共1000公斤）</div>
+                            <div class="left-view type">{{ item.agriculturalBo.agriculturalCategory }}</div>
+                            <div class="right-view count">
+                                {{ item.unit }}袋（共{{ item.agriculturalCount }}{{ item.agriculturalBo.unitweight }}）
+                            </div>
                         </div>
                         <div class="item-desc company">
-                            <div class="left-view">内蒙古东升肥料有限公司</div>
-                            <div class="right-view unit">（50公斤/袋）</div>
+                            <div class="left-view">{{ item.agriculturalBo.manufacturers }}</div>
+                            <div class="right-view unit">
+                                （{{ item.agriculturalBo.agriculturalCount }}{{ item.agriculturalBo.unitweight }}/{{
+                                    item.agriculturalBo.unitmeasurement
+                                }}）
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -197,8 +217,7 @@
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="visibleForOrderDetail = false">取消</el-button>
-                    <el-button type="primary">确认</el-button>
+                    <el-button @click="visibleForOrderDetail = false">关闭</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -246,6 +265,7 @@ export default {
     data() {
         return {
             activeName: "purchaseOrder",
+            loading: false,
             purchaseOrderList: [],
             // 跟进状态 未跟进-0 1-已完成, 2-已关闭 3-已跟进 -1-全部 默认传-1
             orderStatusList: [
@@ -321,7 +341,9 @@ export default {
                     orderState: this.purchaseOrderForm.status,
                 },
             };
+            this.loading = true;
             return purchaseOrderListApi(params).then((res) => {
+                this.loading = false;
                 this.purchaseOrderForm.total = res.total || 0;
                 if (res && res.data) {
                     this.purchaseOrderList = res.data.map((item) => {
@@ -410,7 +432,7 @@ export default {
             const params = {
                 createTime: dayjs().format("YYYY-MM-DD HH:mm:ss"),
                 followText: this.followForm.followText,
-                id: 0,
+                id: this.selectedOrder && this.selectedOrder.id,
                 orderNo: this.selectedOrder && this.selectedOrder.orderUuid,
             };
             return saveMaterialsApi(params).then((res) => {
@@ -425,7 +447,11 @@ export default {
         },
         // 新建农资
         addMaterials() {
-            this.$refs.materialsTab.visibleForAdd = true;
+            this.$refs.materialsTab.addMaterials();
+        },
+        // 搜索农资
+        searchMaterials() {
+            this.$refs.materialsTab.getMaterialsList();
         },
     },
 };
