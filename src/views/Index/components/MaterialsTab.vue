@@ -15,7 +15,7 @@
                     {{ scope.row.agriculturalCount }}{{ scope.row.unitweight }}/{{ scope.row.unitmeasurement }}
                 </template>
             </el-table-column>
-            <el-table-column label="状态" prop="" width="180"> </el-table-column>
+            <el-table-column label="状态" prop="statusText" width="180"> </el-table-column>
             <el-table-column label="厂家" prop="manufacturers" width="180"></el-table-column>
             <el-table-column label="操作" width="300">
                 <template #default="scope">
@@ -49,7 +49,7 @@
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
         />
-        <el-dialog v-model="visibleForAdd" title="新建农资" width="50%">
+        <el-dialog v-model="visibleForAdd" :title="isEdit ? '编辑农资' : '新建农资'" width="50%">
             <div class="dialog-body">
                 <el-form :model="addForm" label-width="120px" label-suffix=":">
                     <el-form-item label="农资名称">
@@ -122,7 +122,7 @@
                     <el-form-item label="农资banner图">
                         <el-upload
                             v-model:file-list="addForm.bannerList"
-                            :action="uploadApi"
+                            :action="uploadUrl"
                             list-type="picture-card"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
@@ -135,12 +135,7 @@
                         </el-upload>
                     </el-form-item>
                     <el-form-item label="农资图文介绍">
-                        <el-input
-                            v-model="addForm.richContent"
-                            :autosize="{ minRows: 3, maxRows: 5 }"
-                            type="textarea"
-                            placeholder="请输入"
-                        />
+                        <Tinymce v-model="addForm.richContent" @change="handleEditorChange" width="100%" />
                     </el-form-item>
                 </el-form>
             </div>
@@ -171,8 +166,8 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForDetail" title="农资详情" width="50%">
-            <div class="dialog-body">
+        <el-dialog v-model="visibleForDetail" title="农资详情" width="50%" @close="closeDetailDialog">
+            <div v-if="selectedMaterials && selectedMaterials.agriculturalBo" class="dialog-body">
                 <el-form :model="addForm" label-width="120px" label-suffix=":">
                     <el-form-item label="农资名称">
                         {{ selectedMaterials && selectedMaterials.agriculturalBo.title }}
@@ -202,13 +197,7 @@
                         />
                     </el-form-item>
                     <el-form-item label="农资图文介绍">
-                        <el-input
-                            v-model="selectedMaterials.richContent"
-                            :autosize="{ minRows: 3, maxRows: 5 }"
-                            type="textarea"
-                            placeholder="请输入"
-                            readonly
-                        />
+                        <div v-html="selectedMaterials.richContent"></div>
                     </el-form-item>
                 </el-form>
             </div>
@@ -218,7 +207,7 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForOperate" title="农资上/下架" width="40%">
+        <el-dialog v-model="visibleForOperate" title="农资上/下架" width="40%" @close="closeOperateMaterialsDialog">
             <div class="dialog-body">
                 <el-form label-width="120px" label-suffix=":">
                     <el-form-item label="农资ID">
@@ -250,7 +239,7 @@
 
 <script>
 import {
-    uploadApi,
+    uploadUrl,
     materialsTypeListApi,
     weightUnitListApi,
     unitMeasurementListApi,
@@ -259,8 +248,12 @@ import {
     saveMaterialsApi,
     updateMaterialsStatusApi,
 } from "../../../request/api.js";
+import Tinymce from "../../../components/Tinymce/Tinymce.vue";
 export default {
     name: "MaterialsTab",
+    components: {
+        Tinymce,
+    },
     props: {
         searchForm: {
             type: Object,
@@ -269,7 +262,7 @@ export default {
     },
     data() {
         return {
-            uploadApi,
+            uploadUrl,
             materialsTypeList: [],
             unitTypeList: [],
             unitmeasurementList: [],
@@ -314,6 +307,7 @@ export default {
             visibleForDetail: false, // 是否展示农资详情弹框
             visibleForOperate: false, // 是否展示农资上下架弹框
             selectedMaterials: null, // 已选择的农资
+            isEdit: false, // 是否编辑
         };
     },
     watch: {
@@ -375,6 +369,8 @@ export default {
                 this.materialsForm.total = res.total || 0;
                 if (res && res.data) {
                     this.materialsList = res.data.map((item) => {
+                        const element = this.statusList.find((child) => child.value === item.status);
+                        item.statusText = element && element.label;
                         return item;
                     });
                 } else {
@@ -426,9 +422,9 @@ export default {
             const unitmeasurementItem = this.unitmeasurementList.find(
                 (item) => item.id === this.addForm.unitmeasurementid
             );
-            params.agriculturalCategory = typeItem && typeItem.title;
-            params.unitmeasurement = unitmeasurementItem && unitmeasurementItem.title;
-            params.unitweight = unitItem && unitItem.title;
+            params.agriculturalBo.agriculturalCategory = typeItem && typeItem.title;
+            params.agriculturalBo.unitmeasurement = unitmeasurementItem && unitmeasurementItem.title;
+            params.agriculturalBo.unitweight = unitItem && unitItem.title;
             if (this.addForm.bannerList && this.addForm.bannerList.length > 0) {
                 const bannerList = [];
                 this.addForm.bannerList.forEach((item) => {
@@ -458,6 +454,7 @@ export default {
                 if (res && res.code === "200") {
                     this.$message.success("操作成功");
                     this.getMaterialsList();
+                    this.closeOperateMaterialsDialog();
                 } else {
                     this.$message.error(res.message || "操作失败");
                 }
@@ -515,10 +512,25 @@ export default {
         },
         // 新建农资
         addMaterials() {
+            this.addForm = {
+                id: 0,
+                agriculturalId: 0,
+                title: "",
+                agriculturalCategoryId: "",
+                agriculturalPrice: undefined,
+                agriculturalCount: undefined,
+                unitweightid: "",
+                unitmeasurementid: "",
+                manufacturers: "",
+                bannerList: "",
+                richContent: "",
+            };
             this.visibleForAdd = true;
+            this.isEdit = false;
         },
         // 编辑农资
         editMaterials(row) {
+            this.isEdit = true;
             this.getMaterialsDetail(row.id).then(() => {
                 this.addForm = {
                     id: row.id,
@@ -528,7 +540,7 @@ export default {
                     agriculturalPrice: this.selectedMaterials.agriculturalBo.agriculturalPrice,
                     agriculturalCount: this.selectedMaterials.agriculturalBo.agriculturalCount,
                     unitweightid: this.selectedMaterials.agriculturalBo.unitweightid,
-                    unitmeasurementid: this.selectedMaterials.agriculturalBo.title,
+                    unitmeasurementid: this.selectedMaterials.agriculturalBo.unitmeasurementid,
                     manufacturers: this.selectedMaterials.agriculturalBo.manufacturers,
                     bannerList: "",
                     richContent: this.selectedMaterials.richContent,
@@ -568,10 +580,17 @@ export default {
         closeDetailDialog() {
             this.visibleForDetail = false;
         },
+        // 富文本编辑器内容改变
+        handleEditorChange() {},
     },
 };
 </script>
 
+<style>
+.materials-tab-wrapper .el-input-number .el-input__inner {
+    text-align: left;
+}
+</style>
 <style lang="less">
 .materials-tab-wrapper {
     .form-select {

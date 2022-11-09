@@ -1,6 +1,11 @@
 import request from "./index";
 
-const uploadApi = `https://erp.deepberry.cn/api/v1/adam/upload`;
+const uploadUrl = `https://erp.deepberry.cn/api/v1/adam/upload`;
+
+// 上传图片
+const uploadApi = function (params, config) {
+    return request.post("/api/v1/adam/upload", params, config);
+};
 
 // 栽培方式列表
 const growthTypeListApi = function (params) {
@@ -25,6 +30,11 @@ const unitMeasurementListApi = function (params) {
 // 采购订单列表
 const purchaseOrderListApi = function (params) {
     return request.post("/api/v1/adam/adminOrder/list", params);
+};
+
+// 采购订单详情
+const purchaseOrderDetailApi = function (params) {
+    return request.post("/api/v1/adam/agricultural/orderDetail", params);
 };
 
 // 平台农资列表
@@ -138,12 +148,14 @@ const savePlantModelApi = function (params) {
 };
 
 export {
+    uploadUrl,
     uploadApi,
     growthTypeListApi,
     materialsTypeListApi,
     weightUnitListApi,
     unitMeasurementListApi,
     purchaseOrderListApi,
+    purchaseOrderDetailApi,
     platformMaterialsListApi,
     updateOrderStatusApi,
     saveOrderFollowApi,

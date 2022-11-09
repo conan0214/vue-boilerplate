@@ -30,4 +30,8 @@ body,
 body {
     background: #f2f4f7;
 }
+/* 富文本菜单 */
+.tox-tinymce-aux {
+    z-index: 9999 !important;
+}
 </style>

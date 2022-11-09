@@ -150,7 +150,7 @@
                         selectedOrder && selectedOrder.orderUuid
                     }}</el-descriptions-item>
                     <el-descriptions-item label="提交时间:">{{
-                        selectedOrder && selectedOrder.orderTime
+                        selectedOrder && selectedOrder.time
                     }}</el-descriptions-item>
                     <el-descriptions-item label="提交人:">{{
                         selectedOrder && selectedOrder.userName
@@ -159,7 +159,7 @@
                         selectedOrder && selectedOrder.userCompany
                     }}</el-descriptions-item>
                 </el-descriptions>
-                <div class="list">
+                <div v-if="selectedOrder && selectedOrder.agriculturalCartBos" class="list">
                     <div v-for="(item, index) in selectedOrder.agriculturalCartBos" class="item" :key="index">
                         <div class="item-title">农资ID：{{ item.agriculturalBo.agriculturalNo }}</div>
                         <div class="item-desc title">
@@ -185,39 +185,35 @@
                 <div class="summary-info">
                     <div class="left-view">合计</div>
                     <div class="right-view">
-                        <div class="right-view-item">
-                            <div class="label">化肥</div>
-                            <div class="value">50000公斤</div>
-                        </div>
-                        <div class="right-view-item">
-                            <div class="label">有机肥</div>
-                            <div class="value">90000公斤</div>
+                        <div v-for="(item, index) in selectedOrder.totalCount" class="right-view-item" :key="index">
+                            <div class="label">{{ item.title }}</div>
+                            <div class="value">{{ item.agriculturalCos }}{{ item.unitweight }}</div>
                         </div>
                         <div class="right-view-item">
                             <div class="label">参考价</div>
-                            <div class="value price">¥12300.00元</div>
+                            <div class="value price">¥{{ selectedOrder.orderCos }}元</div>
                         </div>
                     </div>
                 </div>
                 <div class="record-div">
                     <div class="record-div-title">跟进记录</div>
                     <div class="record-list">
-                        <div class="record-item record-item-current">
-                            <div class="record-item-status">订单完成/异常关闭</div>
+                        <div
+                            v-for="(item, index) in selectedOrder.orderFollowTextBos"
+                            class="record-item"
+                            :class="{ 'record-item-current': index === 0 }"
+                            :key="index"
+                        >
+                            <div class="record-item-status">{{ item.followText }}</div>
                             <div class="record-item-name">张三</div>
-                            <div class="record-item-time">2022.05.25 11:45:25</div>
-                        </div>
-                        <div class="record-item">
-                            <div class="record-item-status">已经电话沟通，待付款</div>
-                            <div class="record-item-name">张三</div>
-                            <div class="record-item-time">2022.05.25 11:45:25</div>
+                            <div class="record-item-time">{{ item.createTime }}</div>
                         </div>
                     </div>
                 </div>
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="visibleForOrderDetail = false">关闭</el-button>
+                    <el-button @click="closeOrderDetailDialog">关闭</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -256,7 +252,12 @@
 <script>
 import dayjs from "dayjs";
 import MaterialsTab from "./components/MaterialsTab.vue";
-import { purchaseOrderListApi, updateOrderStatusApi, saveMaterialsApi } from "../../request/api.js";
+import {
+    purchaseOrderListApi,
+    updateOrderStatusApi,
+    saveOrderFollowApi,
+    purchaseOrderDetailApi,
+} from "../../request/api.js";
 export default {
     name: "IndexPage",
     components: {
@@ -356,6 +357,20 @@ export default {
                 }
             });
         },
+        // 获取采购订单详情
+        getPurchaseOrderDetail(id) {
+            const params = {
+                id,
+            };
+            return purchaseOrderDetailApi(params).then((res) => {
+                if (res && res.data) {
+                    this.selectedOrder = res.data;
+                    this.selectedOrder.time = dayjs(this.selectedOrder.orderTime).format("YYYY-MM-DD HH:mm:ss");
+                } else {
+                    this.selectedOrder = null;
+                }
+            });
+        },
         handleSizeChange() {
             this.purchaseOrderForm.currentPage = 1;
             this.getPurchaseOrderList();
@@ -409,8 +424,9 @@ export default {
         },
         // 打开订单详情弹框
         openOrderDetailDialog(row) {
-            this.selectedOrder = row;
-            this.visibleForOrderDetail = true;
+            this.getPurchaseOrderDetail(row.id).then(() => {
+                this.visibleForOrderDetail = true;
+            });
         },
         // 取消订单详情弹框
         closeOrderDetailDialog() {
@@ -426,6 +442,9 @@ export default {
         closeFollowDialog() {
             this.visibleForFollow = false;
             this.selectedOrder = null;
+            this.followForm = {
+                followText: "",
+            };
         },
         // 保存跟进记录
         saveFollowText() {
@@ -435,7 +454,7 @@ export default {
                 id: this.selectedOrder && this.selectedOrder.id,
                 orderNo: this.selectedOrder && this.selectedOrder.orderUuid,
             };
-            return saveMaterialsApi(params).then((res) => {
+            return saveOrderFollowApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("操作成功");
                     this.closeFollowDialog();

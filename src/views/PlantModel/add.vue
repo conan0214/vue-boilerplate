@@ -194,7 +194,7 @@
                     <el-form-item label="参考图">
                         <el-upload
                             v-model:file-list="modelForm.imgList"
-                            :action="uploadApi"
+                            :action="uploadUrl"
                             list-type="picture-card"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
@@ -343,7 +343,7 @@
                     <el-form-item label="参考视频">
                         <el-upload
                             v-model:file-list="farmGuideForm.imgList"
-                            :action="uploadApi"
+                            :action="uploadUrl"
                             list-type="picture-card"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
@@ -379,7 +379,7 @@
                     <el-form-item label="参考视频">
                         <el-upload
                             v-model:file-list="cureGuideForm.imgList"
-                            :action="uploadApi"
+                            :action="uploadUrl"
                             list-type="picture-card"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
@@ -414,7 +414,7 @@
 
 <script>
 import {
-    uploadApi,
+    uploadUrl,
     saveGrowthStageApi,
     savePlantSuggestionApi,
     saveFarmGuideApi,
@@ -435,7 +435,7 @@ export default {
     name: "Add",
     data() {
         return {
-            uploadApi,
+            uploadUrl,
             growthTypeList: [], // 栽培方式
             form: {
                 categoryTitle: "",
