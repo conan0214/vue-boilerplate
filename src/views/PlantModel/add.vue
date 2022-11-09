@@ -29,29 +29,31 @@
                         <span class="tips">模型支持左右移动</span>
                     </div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus" @click="openAddGrowthStageDialog"
+                        <el-button plain type="primary" icon="CirclePlus" @click="openAddGrowthStageDialog(null)"
                             >添加</el-button
                         >
                     </div>
                 </div>
                 <div class="card-list">
-                    <div v-for="(item, index) in growthStageList" class="card-item" :key="index">
+                    <div
+                        v-for="(item, index) in growthStageList"
+                        class="card-item"
+                        :class="{ 'card-item-active': index === selectedGrowthStageIndex }"
+                        :key="index"
+                        @click="selectGrowthStage(index)"
+                    >
                         <div class="card-header">
                             <div class="card-header-title">
                                 <div class="left-view">阶段{{ index + 1 }}：{{ item.phaseName }}</div>
                                 <div class="right-view">
-                                    <el-icon class="icon" @click="openAddGrowthStageDialog(item)"><Edit /></el-icon>
-                                    <el-icon class="icon" @click="delGrowthStage(index)"><Delete /></el-icon>
+                                    <el-icon class="icon" @click="openAddGrowthStageDialog(item, $event)"
+                                        ><Edit
+                                    /></el-icon>
+                                    <el-icon class="icon" @click="delGrowthStage(index, $event)"><Delete /></el-icon>
                                 </div>
                             </div>
                             <div class="card-header-img">
-                                <el-image
-                                    v-for="child in item.imgList"
-                                    class="img"
-                                    :src="child"
-                                    :key="child"
-                                    fit="cover"
-                                />
+                                <el-image class="img" :src="item.image" fit="cover" />
                             </div>
                         </div>
                         <div class="card-table">
@@ -80,48 +82,20 @@
                         <span class="tips">模型支持上下移动</span>
                     </div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus" @click="openPlantSuggestion">添加</el-button>
+                        <el-button plain type="primary" icon="CirclePlus" @click="openPlantSuggestion(null)"
+                            >添加</el-button
+                        >
                     </div>
                 </div>
                 <el-table class="section-table" :data="tableData">
-                    <el-table-column label="光合作用" width="120">
+                    <el-table-column
+                        v-for="(item, index) in tableData"
+                        :key="index"
+                        :label="item.parameterName"
+                        width="120"
+                    >
                         <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="积温" width="120">
-                        <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="单株灌溉量" width="120">
-                        <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="株高" width="120">
-                        <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="叶面积" width="120">
-                        <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="单株重量" width="120">
-                        <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="单株重量" width="120">
-                        <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
-                        </template>
-                    </el-table-column>
-                    <el-table-column label="种植建议" width="180">
-                        <template #default="scope">
-                            <span>{{ scope.row.id }}</span>
+                            <span>{{ scope.row.status }}</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="操作">
@@ -189,15 +163,19 @@
             <div class="dialog-body">
                 <el-form :model="modelForm" label-width="80px" label-suffix=":">
                     <el-form-item label="阶段名称">
-                        <el-input v-model="modelForm.phaseName" clearable placeholder="请输入阶段名称" />
+                        <el-input
+                            v-model="modelForm.phaseName"
+                            clearable
+                            placeholder="请输入阶段名称"
+                            :maxlength="64"
+                        />
                     </el-form-item>
                     <el-form-item label="参考图">
                         <el-upload
                             v-model:file-list="modelForm.imgList"
                             :action="uploadUrl"
                             list-type="picture-card"
-                            :on-preview="handlePictureCardPreview"
-                            :on-remove="handleRemove"
+                            :limit="1"
                         >
                             <el-icon><Camera /></el-icon>
                             添加参考图
@@ -212,7 +190,12 @@
                         >
                             <div class="standard-item-content">
                                 <div class="label">参数名：</div>
-                                <el-input class="input" v-model="item.parameterName" placeholder="请输入名称" />
+                                <el-input
+                                    class="input"
+                                    v-model="item.parameterName"
+                                    :readonly="index === 0"
+                                    placeholder="请输入名称"
+                                />
                             </div>
                             <div class="standard-item-content">
                                 <div class="label">参考值：</div>
@@ -274,10 +257,10 @@
                         <div class="left-view">参数名</div>
                         <div class="right-view">选择实际偏离</div>
                     </div>
-                    <div class="card-table-row">
-                        <div class="left-view">光合积分</div>
+                    <div v-for="(item, index) in standardList" class="card-table-row" :key="index">
+                        <div class="left-view">{{ item.parameterName }}</div>
                         <div class="right-view">
-                            <el-select class="select" v-model="selectValue" placeholder="请选择">
+                            <el-select class="select" v-model="item.status" placeholder="请选择">
                                 <el-option class="low" label="偏低" value="0">
                                     <span>偏低</span>
                                     <span class="icon-low"></span>
@@ -292,30 +275,6 @@
                                 </el-option>
                             </el-select>
                         </div>
-                    </div>
-                    <div class="card-table-row">
-                        <div class="left-view">积温</div>
-                        <div class="right-view">0-150 °C</div>
-                    </div>
-                    <div class="card-table-row">
-                        <div class="left-view">单株灌溉量</div>
-                        <div class="right-view">0-50ml</div>
-                    </div>
-                    <div class="card-table-row">
-                        <div class="left-view">株高</div>
-                        <div class="right-view">0-2cm</div>
-                    </div>
-                    <div class="card-table-row">
-                        <div class="left-view">叶面积</div>
-                        <div class="right-view">0-1 cm²</div>
-                    </div>
-                    <div class="card-table-row">
-                        <div class="left-view">单株重量</div>
-                        <div class="right-view">0-50 g</div>
-                    </div>
-                    <div class="card-table-row">
-                        <div class="left-view">种植时间</div>
-                        <div class="right-view">0-5 day</div>
                     </div>
                 </div>
                 <el-form :model="suggestionForm" label-width="100px" label-position="top" label-suffix=":">
@@ -333,7 +292,7 @@
             <template #footer>
                 <span class="dialog-footer">
                     <el-button>取消</el-button>
-                    <el-button type="primary">保存</el-button>
+                    <el-button type="primary" @click="savePlantSuggestion">保存</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -345,8 +304,6 @@
                             v-model:file-list="farmGuideForm.imgList"
                             :action="uploadUrl"
                             list-type="picture-card"
-                            :on-preview="handlePictureCardPreview"
-                            :on-remove="handleRemove"
                         >
                             <el-icon><Camera /></el-icon>
                             点击上传视频
@@ -381,8 +338,6 @@
                             v-model:file-list="cureGuideForm.imgList"
                             :action="uploadUrl"
                             list-type="picture-card"
-                            :on-preview="handlePictureCardPreview"
-                            :on-remove="handleRemove"
                         >
                             <el-icon><Camera /></el-icon>
                             点击上传视频
@@ -430,6 +385,7 @@ import {
     suggestionDetailApi,
     plantModelDetailApi,
     growthTypeListApi,
+    standardListApi,
 } from "../../request/api.js";
 export default {
     name: "Add",
@@ -443,15 +399,17 @@ export default {
                 growthId: "",
             },
             growthStageList: [], // 植物生长阶段列表
-            selectedGrowthStage: null, // 已选择的生长阶段
-            tableData: [],
+            selectedGrowthStageIndex: -1, // 已选择的生长阶段索引
+            standardList: [], // 生长阶段下的参数列表
+            tableList: [],
             modelForm: {
                 // 添加、编辑模型
+                id: 0,
                 phaseName: "",
                 imgList: [],
                 growPlantModelDetailBos: [
                     {
-                        parameterName: "",
+                        parameterName: "种植天数",
                         leastValue: undefined,
                         maxValue: undefined,
                         unit: "",
@@ -461,7 +419,6 @@ export default {
             visibleForModel: false, // 是否展示添加、编辑生长阶段弹框
             visibleForDelModel: false, // 是否展示删除生长阶段弹框
             visibleForSuggestion: false, // 是否展示添加、编辑种植建议弹框
-            selectValue: "",
             suggestionForm: {
                 suggestion: "",
             },
@@ -483,6 +440,21 @@ export default {
             selectedCureGuide: null, // 已选的防治病虫害指导
         };
     },
+    computed: {
+        tableData() {
+            let tableData = [];
+            if (this.selectedGrowthStageIndex === -1) {
+                return [];
+            }
+            if (
+                this.tableList[this.selectedGrowthStageIndex] &&
+                this.tableList[this.selectedGrowthStageIndex].growPlantAdviseDetailBos
+            ) {
+                tableData = this.tableList[this.selectedGrowthStageIndex].growPlantAdviseDetailBos;
+            }
+            return tableData;
+        },
+    },
     mounted() {
         this.getGrowthTypeList();
     },
@@ -499,10 +471,35 @@ export default {
         goBack() {
             this.$router.back();
         },
+        // 选择生长阶段
+        selectGrowthStage(index) {
+            this.selectedGrowthStageIndex = index;
+        },
         // 打开添加生长阶段弹框
-        openAddGrowthStageDialog(row) {
+        openAddGrowthStageDialog(row, e) {
+            if (e) {
+                e.stopPropagation();
+            }
             if (row) {
-                this.selectedGrowthStage = row;
+                this.modelForm = {
+                    id: row.id,
+                    phaseName: row.phaseName,
+                    imgList: [
+                        {
+                            url: row.image,
+                            response: {
+                                data: {
+                                    imageUrl: row.image,
+                                },
+                            },
+                        },
+                    ],
+                    growPlantModelDetailBos: row.growPlantModelDetailBos.map((item) => {
+                        return {
+                            ...item,
+                        };
+                    }),
+                };
             }
             this.visibleForModel = true;
         },
@@ -511,21 +508,22 @@ export default {
             this.visibleForModel = false;
             this.modelForm = {
                 // 添加、编辑模型
+                id: 0,
                 phaseName: "",
                 imgList: [],
                 growPlantModelDetailBos: [
                     {
-                        parameterName: "",
+                        parameterName: "种植天数",
                         leastValue: undefined,
                         maxValue: undefined,
                         unit: "",
                     },
                 ],
             };
-            this.selectedGrowthStage = null;
         },
         // 删除生长阶段
-        delGrowthStage(index) {
+        delGrowthStage(index, e) {
+            e.stopPropagation();
             this.growthStageList.splice(index, 1);
         },
         // 添加参考指标
@@ -547,33 +545,84 @@ export default {
                 createName: "",
                 growModelId: "",
                 growPlantModelDetailBos: this.modelForm.growPlantModelDetailBos,
-                id: 0,
+                id: this.modelForm.id,
                 image: "",
                 phaseName: this.modelForm.phaseName,
             };
             if (this.modelForm.imgList[0]) {
                 const response = this.modelForm.imgList[0].response;
-                params.video = response && response.data && response.data.imageUrl;
+                params.image = response && response.data && response.data.imageUrl;
             }
             return saveGrowthStageApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
-                    this.growthStageList.push({
-                        ...this.modelForm,
-                    });
+                    this.growthStageList.push(res.data);
                     this.closeAddGrowthStageDialog();
                 } else {
                     this.$message.error(res.message || "保存失败");
                 }
             });
         },
+        // 获取生长阶段下的参数列表
+        getStandardList() {
+            if (this.selectedGrowthStageIndex === -1) {
+                return;
+            }
+            const params = {
+                id: this.growthStageList[this.selectedGrowthStageIndex].id,
+            };
+            return standardListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.standardList = res.data;
+                } else {
+                    this.$message.error(res.message || "获取参数列表失败");
+                }
+            });
+        },
         // 打开添加种植参考建议弹框
         openPlantSuggestion(row) {
-            console.log(row);
+            if (this.selectedGrowthStageIndex === -1) {
+                this.$message.warning("请选择生长阶段");
+                return;
+            }
+            // FIXME: 测试
+            this.standardList = this.growthStageList[this.selectedGrowthStageIndex].growPlantModelDetailBos;
+            this.getStandardList().then(() => {
+                if (row) {
+                    console.log(row);
+                }
+                this.visibleForSuggestion = true;
+            });
+        },
+        // 关闭种植参考建议弹框
+        closePlantSuggestion() {
+            this.visibleForSuggestion = false;
+            this.standardList = [];
+            this.suggestionForm = {
+                suggestion: "",
+            };
         },
         // 删除种植参考建议
         delPlantSuggestion(index) {
             console.log(index);
+        },
+        // 保存种植参考建议
+        savePlantSuggestion() {
+            const params = {
+                createName: "",
+                growModelId: "",
+                growPlantAdviseDetailBos: this.standardList,
+                id: this.suggestionForm.id,
+                text: this.suggestionForm.suggestion,
+            };
+            return savePlantSuggestionApi(params).then((res) => {
+                if (res && res.code === "200") {
+                    this.$message.success("保存成功");
+                    this.tableList.push(res.data);
+                } else {
+                    this.$message.error(res.message || "保存失败");
+                }
+            });
         },
         // 打开添加农事指导弹框
         openFarmGuideDialog(row) {
@@ -769,13 +818,22 @@ export default {
         }
         .card-list {
             display: flex;
+            flex-wrap: nowrap;
             padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: auto;
             .card-item {
+                margin-right: 20px;
                 width: 192px;
                 border-radius: 4px;
                 border: 1px solid #e2e2e2;
                 font-size: 12px;
                 color: #333;
+                &-active {
+                    box-shadow: 0px 0px 10px 0px rgba(83, 141, 255, 0.26);
+                    border: 1px solid #538dff;
+                }
                 .card-header {
                     &-title {
                         display: flex;

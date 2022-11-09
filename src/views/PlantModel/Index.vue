@@ -7,7 +7,7 @@
                 <el-select v-model="plantModelForm.status" class="search-select" placeholder="请选择">
                     <el-option v-for="item in statusList" :label="item.label" :value="item.value" :key="item.value" />
                 </el-select>
-                <el-button type="primary">搜索</el-button>
+                <el-button type="primary" @click="search">搜索</el-button>
                 <el-button type="primary" icon="CirclePlus" @click="addPlantModel">创建模型</el-button>
             </div>
         </div>
@@ -83,6 +83,7 @@ export default {
     data() {
         return {
             activeName: "plantModelTab",
+            loading: false,
             // 模型状态 0正常 1 停用 -1 全部
             statusList: [
                 {
@@ -125,7 +126,9 @@ export default {
                     state: this.plantModelForm.status,
                 },
             };
+            this.loading = true;
             return plantModelListApi(params).then((res) => {
+                this.loading = false;
                 this.plantModelForm.total = res.total || 0;
                 if (res && res.data) {
                     this.plantModelList = res.data.map((item) => {
@@ -180,6 +183,10 @@ export default {
         // 创建种植模型
         addPlantModel() {
             this.$router.push("/add");
+        },
+        // 搜索
+        search() {
+            this.getPlantModelList();
         },
     },
 };
