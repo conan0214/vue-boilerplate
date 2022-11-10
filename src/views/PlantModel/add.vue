@@ -89,13 +89,13 @@
                 </div>
                 <el-table class="section-table" :data="tableData">
                     <el-table-column
-                        v-for="(item, index) in tableData"
+                        v-for="(item, index) in standardList"
                         :key="index"
                         :label="item.parameterName"
                         width="120"
                     >
                         <template #default="scope">
-                            <span>{{ scope.row.status }}</span>
+                            <span>{{ getStatusText(scope.row[item.parameterName]) }}</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="操作">
@@ -112,7 +112,9 @@
                 <div class="section-title">
                     <div class="left-view">农事操作指导</div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus" @click="openFarmGuideDialog">添加</el-button>
+                        <el-button plain type="primary" icon="CirclePlus" @click="openFarmGuideDialog(null)"
+                            >添加</el-button
+                        >
                     </div>
                 </div>
                 <div class="guide-list">
@@ -134,7 +136,9 @@
                 <div class="section-title">
                     <div class="left-view">病虫害防治</div>
                     <div class="right-view">
-                        <el-button plain type="primary" icon="CirclePlus" @click="openCureGuideDialog">添加</el-button>
+                        <el-button plain type="primary" icon="CirclePlus" @click="openCureGuideDialog(null)"
+                            >添加</el-button
+                        >
                     </div>
                 </div>
                 <div class="guide-list">
@@ -153,11 +157,15 @@
                                 <el-icon class="icon" @click="delCureGuide(index)"><Delete /></el-icon>
                             </div>
                         </div>
-                        <div class="title">通风降温</div>
-                        <div class="desc-div"></div>
+                        <div class="title">{{ item.title }}</div>
+                        <div class="desc-div">{{ item.text }}</div>
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="footer">
+            <el-button plain @click="goBack">取消</el-button>
+            <el-button class="btn-save" type="primary" @click="savePlantModel">保存</el-button>
         </div>
         <el-dialog v-model="visibleForModel" title="添加生长阶段" width="50%" @close="closeAddGrowthStageDialog">
             <div class="dialog-body">
@@ -261,15 +269,15 @@
                         <div class="left-view">{{ item.parameterName }}</div>
                         <div class="right-view">
                             <el-select class="select" v-model="item.status" placeholder="请选择">
-                                <el-option class="low" label="偏低" value="0">
+                                <el-option class="low" label="偏低" :value="0">
                                     <span>偏低</span>
                                     <span class="icon-low"></span>
                                 </el-option>
-                                <el-option class="normal" label="正常" value="1">
+                                <el-option class="normal" label="正常" :value="1">
                                     <span>正常</span>
                                     <span class="icon-normal"></span>
                                 </el-option>
-                                <el-option class="high" label="偏高" value="2">
+                                <el-option class="high" label="偏高" :value="2">
                                     <span>偏高</span>
                                     <span class="icon-high"></span>
                                 </el-option>
@@ -296,7 +304,7 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForFarmGuide" title="添加种植建议" width="50%" @close="closeFarmGuideDialog">
+        <el-dialog v-model="visibleForFarmGuide" title="添加农事指导" width="50%" @close="closeFarmGuideDialog">
             <div class="dialog-body">
                 <el-form :model="farmGuideForm" label-width="100px" label-suffix=":">
                     <el-form-item label="参考视频">
@@ -424,34 +432,33 @@ export default {
             },
             visibleForFarmGuide: false, // 是否展示添加、编辑农事指导的弹框
             farmGuideForm: {
+                id: 0,
                 imgList: [],
                 title: "",
                 text: "",
             },
             farmGuideList: [],
-            selectedFarmGuide: null, // 已选的农事指导
             visibleForCureGuide: false, // 是否展示添加、编辑病虫害防治指导的弹框
             cureGuideForm: {
+                id: 0,
                 imgList: [],
                 title: "",
                 text: "",
             },
             cureGuideList: [],
-            selectedCureGuide: null, // 已选的防治病虫害指导
         };
     },
     computed: {
         tableData() {
             let tableData = [];
-            if (this.selectedGrowthStageIndex === -1) {
-                return [];
-            }
-            if (
-                this.tableList[this.selectedGrowthStageIndex] &&
-                this.tableList[this.selectedGrowthStageIndex].growPlantAdviseDetailBos
-            ) {
-                tableData = this.tableList[this.selectedGrowthStageIndex].growPlantAdviseDetailBos;
-            }
+            this.tableList.forEach((item) => {
+                if (item.growPlantAdviseDetailBos) {
+                    item.growPlantAdviseDetailBos.forEach((child) => {
+                        item[child.parameterName] = child.status;
+                    });
+                }
+                tableData.push(item);
+            });
             return tableData;
         },
     },
@@ -556,7 +563,13 @@ export default {
             return saveGrowthStageApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
-                    this.growthStageList.push(res.data);
+                    const index = this.growthStageList.findIndex((item) => item.id === res.data.id);
+                    // 编辑去重
+                    if (index !== -1) {
+                        this.growthStageList.splice(index, 1, res.data);
+                    } else {
+                        this.growthStageList.push(res.data);
+                    }
                     this.closeAddGrowthStageDialog();
                 } else {
                     this.$message.error(res.message || "保存失败");
@@ -565,15 +578,20 @@ export default {
         },
         // 获取生长阶段下的参数列表
         getStandardList() {
-            if (this.selectedGrowthStageIndex === -1) {
+            if (this.growthStageList.length === 0) {
                 return;
             }
             const params = {
-                id: this.growthStageList[this.selectedGrowthStageIndex].id,
+                growPlantId: this.growthStageList.map((item) => item.id).join(","),
             };
             return standardListApi(params).then((res) => {
                 if (res && res.data) {
-                    this.standardList = res.data;
+                    this.standardList = res.data.map((item) => {
+                        return {
+                            parameterName: item.title,
+                            status: 1,
+                        };
+                    });
                 } else {
                     this.$message.error(res.message || "获取参数列表失败");
                 }
@@ -581,15 +599,17 @@ export default {
         },
         // 打开添加种植参考建议弹框
         openPlantSuggestion(row) {
-            if (this.selectedGrowthStageIndex === -1) {
-                this.$message.warning("请选择生长阶段");
+            if (this.growthStageList.length === 0) {
+                this.$message.warning("请先添加生长阶段");
                 return;
             }
-            // FIXME: 测试
-            this.standardList = this.growthStageList[this.selectedGrowthStageIndex].growPlantModelDetailBos;
             this.getStandardList().then(() => {
                 if (row) {
-                    console.log(row);
+                    this.suggestionForm = {
+                        id: row.id,
+                        suggestion: row.text,
+                    };
+                    this.standardList = row.growPlantAdviseDetailBos;
                 }
                 this.visibleForSuggestion = true;
             });
@@ -597,7 +617,6 @@ export default {
         // 关闭种植参考建议弹框
         closePlantSuggestion() {
             this.visibleForSuggestion = false;
-            this.standardList = [];
             this.suggestionForm = {
                 suggestion: "",
             };
@@ -618,7 +637,14 @@ export default {
             return savePlantSuggestionApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
-                    this.tableList.push(res.data);
+                    // 去重
+                    const index = this.tableList.findIndex((item) => item.id === this.suggestionForm.id);
+                    if (index === -1) {
+                        this.tableList.push(res.data);
+                    } else {
+                        this.tableList.splice(index, 1, res.data);
+                    }
+                    this.closePlantSuggestion();
                 } else {
                     this.$message.error(res.message || "保存失败");
                 }
@@ -626,13 +652,20 @@ export default {
         },
         // 打开添加农事指导弹框
         openFarmGuideDialog(row) {
-            this.selectedFarmGuide = row;
+            if (row) {
+                this.farmGuideForm = row;
+            }
             this.visibleForFarmGuide = true;
         },
         // 关闭添加农事指导弹框
         closeFarmGuideDialog() {
             this.visibleForFarmGuide = false;
-            this.selectedFarmGuide = null;
+            this.farmGuideForm = {
+                id: 0,
+                imgList: [],
+                title: "",
+                text: "",
+            };
         },
         // 删除农事指导
         delFarmGuide(index) {
@@ -642,7 +675,7 @@ export default {
         saveFarmGuide() {
             const params = {
                 growModelId: "",
-                id: 0,
+                id: this.farmGuideForm.id,
                 text: this.farmGuideForm.text,
                 title: this.farmGuideForm.title,
                 video: "",
@@ -654,9 +687,24 @@ export default {
             return saveFarmGuideApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
-                    this.farmGuideList.push({
-                        ...this.farmGuideForm,
-                    });
+                    const index = this.farmGuideList.findIndex((item) => item.id === this.farmGuideForm.id);
+                    if (index === -1) {
+                        this.farmGuideList.push({
+                            ...res.data,
+                            imgList: [
+                                {
+                                    url: res.data.video,
+                                    response: {
+                                        data: {
+                                            imageUrl: res.data.video,
+                                        },
+                                    },
+                                },
+                            ],
+                        });
+                    } else {
+                        this.farmGuideList.splice(index, 1, res.data);
+                    }
                     this.closeFarmGuideDialog();
                 } else {
                     this.$message.error(res.message || "保存失败");
@@ -665,19 +713,26 @@ export default {
         },
         // 打开添加农事指导弹框
         openCureGuideDialog(row) {
-            this.selectedCureGuide = row;
+            if (row) {
+                this.cureGuideForm = row;
+            }
             this.visibleForCureGuide = true;
         },
         // 关闭添加农事指导弹框
         closeCureGuideDialog() {
             this.visibleForCureGuide = false;
-            this.selectedCureGuide = null;
+            this.cureGuideForm = {
+                id: 0,
+                imgList: [],
+                title: "",
+                text: "",
+            };
         },
         // 保存防治病虫害指导
         saveCureGuide() {
             const params = {
                 growModelId: "",
-                id: 0,
+                id: this.cureGuideForm.id,
                 text: this.cureGuideForm.text,
                 title: this.cureGuideForm.title,
                 video: "",
@@ -689,9 +744,24 @@ export default {
             return saveCureGuideApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
-                    this.cureGuideList.push({
-                        ...this.cureGuideForm,
-                    });
+                    const index = this.cureGuideList.findIndex((item) => item.id === this.cureGuideForm.id);
+                    if (index === -1) {
+                        this.cureGuideList.push({
+                            ...res.data,
+                            imgList: [
+                                {
+                                    url: res.data.video,
+                                    response: {
+                                        data: {
+                                            imageUrl: res.data.video,
+                                        },
+                                    },
+                                },
+                            ],
+                        });
+                    } else {
+                        this.cureGuideList.splice(index, 1, res.data);
+                    }
                     this.closeCureGuideDialog();
                 } else {
                     this.$message.error(res.message || "保存失败");
@@ -703,7 +773,7 @@ export default {
             this.cureGuideList.splice(index, 1);
         },
         // 保存种植模型
-        savePlantMode() {
+        savePlantModel() {
             const params = {
                 categoryTitle: this.form.categoryTitle,
                 growAdviseIds: "",
@@ -715,6 +785,24 @@ export default {
                 id: 0,
                 varietyTitle: this.form.varietyTitle,
             };
+            const growthTypeItem = this.growthTypeList.find((item) => item.id === this.form.growthId);
+            params.growthName = growthTypeItem && growthTypeItem.label;
+            // 生长阶段
+            if (this.growthStageList.length > 0) {
+                params.growModelIds = this.growthStageList.map((item) => item.id).join(",");
+            }
+            // 种植建议
+            if (this.tableList.length > 0) {
+                params.growAdviseIds = this.tableList.map((item) => item.id).join(",");
+            }
+            // 农事指导
+            if (this.farmGuideList.length > 0) {
+                params.growOperationGuideIds = this.farmGuideList.map((item) => item.id).join(",");
+            }
+            // 防治病虫害
+            if (this.cureGuideList.length > 0) {
+                params.growPreventionGuideIds = this.cureGuideList.map((item) => item.id).join(",");
+            }
             return savePlantModelApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
@@ -723,6 +811,25 @@ export default {
                     this.$message.error(res.message || "保存失败");
                 }
             });
+        },
+        // 获取状态文案
+        getStatusText(status) {
+            const list = [
+                {
+                    label: "偏低",
+                    value: 0,
+                },
+                {
+                    label: "正常",
+                    value: 1,
+                },
+                {
+                    label: "偏高",
+                    value: 2,
+                },
+            ];
+            const item = list.find((item) => item.value === status);
+            return item ? item.label : status;
         },
     },
 };
@@ -749,7 +856,7 @@ export default {
                 padding: 15px 0;
                 font-size: 14px;
                 color: #333;
-                font-weight: 500;
+                font-weight: 600;
                 border-bottom: 1px solid rgba(0, 0, 0, 0.1);
                 .tips {
                     font-size: 12px;
@@ -796,7 +903,7 @@ export default {
                             top: 10px;
                             right: 12px;
                             z-index: 9;
-                            font-size: 14px;
+                            font-size: 18px;
                             color: #1890ff;
                             .icon {
                                 margin-left: 5px;
@@ -811,6 +918,7 @@ export default {
                     .desc-div {
                         margin-top: 10px;
                         padding: 5px 15px;
+                        font-size: 12px;
                         background: #caf982;
                     }
                 }
@@ -881,6 +989,16 @@ export default {
                     }
                 }
             }
+        }
+    }
+    .footer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 30px;
+        padding: 15px;
+        border-top: 1px solid #eee;
+        .btn-save {
+            margin-left: 20px;
         }
     }
     .dialog-body {

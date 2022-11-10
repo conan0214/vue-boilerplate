@@ -149,7 +149,7 @@ const savePlantModelApi = function (params) {
 
 // 获取生长阶段的参数列表
 const standardListApi = function (params) {
-    return request.post("/api/v1/adam/adminGrowModel/getGrowPlantsModelList", params);
+    return request.post("/api/v1/adam/adminGrowModel/getGrowPlantsParamList", params);
 };
 
 export {
