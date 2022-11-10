@@ -6,7 +6,7 @@
                     <img class="logo" src="../assets/img/img-logo.png" alt="logo" />
                 </div>
                 <el-menu
-                    active-text-color="#fff"
+                    active-text-color="#3A7BFF"
                     background-color="#001529"
                     class="el-menu-vertical"
                     default-active="1"
@@ -19,7 +19,7 @@
                     </el-menu-item>
                     <el-menu-item index="2">
                         <img class="icon" src="../assets/img/icon-moxing.png" alt="模型" />
-                        <span>植物模型</span>
+                        <span>种植模型</span>
                     </el-menu-item>
                 </el-menu>
             </el-aside>
@@ -50,7 +50,7 @@
                         <div class="header-item">退出</div>
                     </div>
                     <el-breadcrumb separator="/">
-                        <el-breadcrumb-item>农资订单</el-breadcrumb-item>
+                        <el-breadcrumb-item>{{ pageName }}</el-breadcrumb-item>
                     </el-breadcrumb>
                 </el-header>
                 <el-main>
@@ -65,7 +65,14 @@
 export default {
     name: "Layout",
     data() {
-        return {};
+        return {
+            pageName: "",
+        };
+    },
+    watch: {
+        $route(to) {
+            this.pageName = to.meta.pageName;
+        },
     },
     methods: {
         selectMenu(index) {

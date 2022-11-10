@@ -74,14 +74,16 @@
                     <el-table-column label="最新更进" prop="followText" width="180"></el-table-column>
                     <el-table-column label="操作" width="340">
                         <template #default="scope">
-                            <el-button type="text" size="small" @click="openOrderDetailDialog(scope.row)"
+                            <el-button link type="primary" size="small" @click="openOrderDetailDialog(scope.row)"
                                 >查看详情</el-button
                             >
-                            <el-button type="text" size="small" @click="openFollowDialog(scope.row)">跟进</el-button>
-                            <el-button type="text" size="small" @click="openFinishOrderDialog(scope.row)"
+                            <el-button link type="primary" size="small" @click="openFollowDialog(scope.row)"
+                                >跟进</el-button
+                            >
+                            <el-button link type="primary" size="small" @click="openFinishOrderDialog(scope.row)"
                                 >完成订单</el-button
                             >
-                            <el-button type="text" size="small" @click="openCloseOrderDialog(scope.row)"
+                            <el-button link type="primary" size="small" @click="openCloseOrderDialog(scope.row)"
                                 >关闭订单</el-button
                             >
                         </template>

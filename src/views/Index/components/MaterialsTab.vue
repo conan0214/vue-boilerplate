@@ -19,22 +19,24 @@
             <el-table-column label="厂家" prop="manufacturers" width="180"></el-table-column>
             <el-table-column label="操作" width="300">
                 <template #default="scope">
-                    <el-button type="text" size="small" @click="viewDetail(scope.row)">查看详情</el-button>
+                    <el-button link type="primary" size="small" @click="viewDetail(scope.row)">查看详情</el-button>
                     <el-button
                         v-if="scope.row.status === 1"
-                        type="text"
+                        link
+                        type="primary"
                         size="small"
                         @click="openOperateMaterialsDialog(scope.row)"
                         >上架</el-button
                     >
                     <el-button
                         v-if="scope.row.status === 0"
-                        type="text"
+                        link
+                        type="primary"
                         size="small"
                         @click="openOperateMaterialsDialog(scope.row)"
                         >下架</el-button
                     >
-                    <el-button type="text" size="small" @click="editMaterials(scope.row)">编辑</el-button>
+                    <el-button link type="primary" size="small" @click="editMaterials(scope.row)">编辑</el-button>
                 </template>
             </el-table-column>
         </el-table>

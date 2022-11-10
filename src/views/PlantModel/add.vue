@@ -9,14 +9,14 @@
             </template>
         </el-page-header>
         <div class="content">
-            <el-form :inline="true" :model="form" class="form">
-                <el-form-item label="种植类型">
+            <el-form ref="form" :inline="true" :model="form" :rules="rules" class="form">
+                <el-form-item label="种植类型" prop="categoryTitle">
                     <el-input v-model="form.categoryTitle" placeholder="请输入种植类型" />
                 </el-form-item>
-                <el-form-item label="种植品种">
+                <el-form-item label="种植品种" prop="varietyTitle">
                     <el-input v-model="form.varietyTitle" placeholder="请输入种植品种" />
                 </el-form-item>
-                <el-form-item label="培育方式">
+                <el-form-item label="培育方式" prop="growthId">
                     <el-select v-model="form.growthId" placeholder="请选择培育方式">
                         <el-option v-for="item in growthTypeList" :label="item.title" :value="item.id" :key="item.id" />
                     </el-select>
@@ -87,7 +87,7 @@
                         >
                     </div>
                 </div>
-                <el-table class="section-table" :data="tableData">
+                <el-table class="section-table" :data="tableData" :cell-class-name="getCellClassName">
                     <el-table-column
                         v-for="(item, index) in standardList"
                         :key="index"
@@ -96,6 +96,8 @@
                     >
                         <template #default="scope">
                             <span>{{ getStatusText(scope.row[item.parameterName]) }}</span>
+                            <span v-if="scope.row[item.parameterName] === 0" class="icon-low"></span>
+                            <span v-if="scope.row[item.parameterName] === 2" class="icon-high"></span>
                         </template>
                     </el-table-column>
                     <el-table-column label="操作">
@@ -271,15 +273,12 @@
                             <el-select class="select" v-model="item.status" placeholder="请选择">
                                 <el-option class="low" label="偏低" :value="0">
                                     <span>偏低</span>
-                                    <span class="icon-low"></span>
                                 </el-option>
                                 <el-option class="normal" label="正常" :value="1">
                                     <span>正常</span>
-                                    <span class="icon-normal"></span>
                                 </el-option>
                                 <el-option class="high" label="偏高" :value="2">
                                     <span>偏高</span>
-                                    <span class="icon-high"></span>
                                 </el-option>
                             </el-select>
                         </div>
@@ -387,10 +386,6 @@ import {
     farmGuideListApi,
     cureGuideListApi,
     savePlantModelApi,
-    growthStageDetailApi,
-    farmGuideDetailApi,
-    cureGuideDetailApi,
-    suggestionDetailApi,
     plantModelDetailApi,
     growthTypeListApi,
     standardListApi,
@@ -447,6 +442,11 @@ export default {
                 text: "",
             },
             cureGuideList: [],
+            rules: {
+                categoryTitle: [{ required: true, message: "请输入种植类型", trigger: "blur" }],
+                varietyTitle: [{ required: true, message: "请输入种植品种", trigger: "blur" }],
+                growthId: [{ required: true, message: "请选择培育方式", trigger: "change" }],
+            },
         };
     },
     computed: {
@@ -869,41 +869,45 @@ export default {
         },
         // 保存种植模型
         savePlantModel() {
-            const params = {
-                categoryTitle: this.form.categoryTitle,
-                growAdviseIds: "",
-                growModelIds: "",
-                growOperationGuideIds: "",
-                growPreventionGuideIds: "",
-                growthId: this.form.growthId,
-                growthName: "",
-                id: this.plantModelId,
-                varietyTitle: this.form.varietyTitle,
-            };
-            const growthTypeItem = this.growthTypeList.find((item) => item.id === this.form.growthId);
-            params.growthName = growthTypeItem && growthTypeItem.title;
-            // 生长阶段
-            if (this.growthStageList.length > 0) {
-                params.growModelIds = this.growthStageList.map((item) => item.id).join(",");
-            }
-            // 种植建议
-            if (this.tableList.length > 0) {
-                params.growAdviseIds = this.tableList.map((item) => item.id).join(",");
-            }
-            // 农事指导
-            if (this.farmGuideList.length > 0) {
-                params.growOperationGuideIds = this.farmGuideList.map((item) => item.id).join(",");
-            }
-            // 防治病虫害
-            if (this.cureGuideList.length > 0) {
-                params.growPreventionGuideIds = this.cureGuideList.map((item) => item.id).join(",");
-            }
-            return savePlantModelApi(params).then((res) => {
-                if (res && res.code === "200") {
-                    this.$message.success("保存成功");
-                    this.$router.back();
-                } else {
-                    this.$message.error(res.message || "保存失败");
+            this.$refs.form.validate((valid) => {
+                if (valid) {
+                    const params = {
+                        categoryTitle: this.form.categoryTitle,
+                        growAdviseIds: "",
+                        growModelIds: "",
+                        growOperationGuideIds: "",
+                        growPreventionGuideIds: "",
+                        growthId: this.form.growthId,
+                        growthName: "",
+                        id: this.plantModelId,
+                        varietyTitle: this.form.varietyTitle,
+                    };
+                    const growthTypeItem = this.growthTypeList.find((item) => item.id === this.form.growthId);
+                    params.growthName = growthTypeItem && growthTypeItem.title;
+                    // 生长阶段
+                    if (this.growthStageList.length > 0) {
+                        params.growModelIds = this.growthStageList.map((item) => item.id).join(",");
+                    }
+                    // 种植建议
+                    if (this.tableList.length > 0) {
+                        params.growAdviseIds = this.tableList.map((item) => item.id).join(",");
+                    }
+                    // 农事指导
+                    if (this.farmGuideList.length > 0) {
+                        params.growOperationGuideIds = this.farmGuideList.map((item) => item.id).join(",");
+                    }
+                    // 防治病虫害
+                    if (this.cureGuideList.length > 0) {
+                        params.growPreventionGuideIds = this.cureGuideList.map((item) => item.id).join(",");
+                    }
+                    return savePlantModelApi(params).then((res) => {
+                        if (res && res.code === "200") {
+                            this.$message.success("保存成功");
+                            this.$router.back();
+                        } else {
+                            this.$message.error(res.message || "保存失败");
+                        }
+                    });
                 }
             });
         },
@@ -926,9 +930,45 @@ export default {
             const item = list.find((item) => item.value === status);
             return item ? item.label : status;
         },
+        // 设置单元格的样式
+        getCellClassName({ row, column }) {
+            const key = column.label;
+            const state = row[key];
+            const stateObj = {
+                0: "cell-low",
+                1: "cell-normal",
+                2: "cell-high",
+            };
+            return stateObj[state] || "";
+        },
     },
 };
 </script>
+
+<style>
+.icon-low {
+    display: inline-block;
+    width: 9px;
+    height: 13px;
+    background: url("../../assets/img/img-xia.png") center no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+}
+.icon-high {
+    display: inline-block;
+    width: 9px;
+    height: 13px;
+    background: url("../../assets/img/img-shang.png") center no-repeat;
+    background-size: contain;
+    vertical-align: middle;
+}
+.cell-low {
+    background: #ff7373;
+}
+.cell-high {
+    background: #caf982;
+}
+</style>
 
 <style lang="less">
 .add-plant-model-wrapper {

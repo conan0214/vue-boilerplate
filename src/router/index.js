@@ -21,14 +21,23 @@ const routes = [
             {
                 path: "index",
                 component: Index,
+                meta: {
+                    pageName: "农资订单",
+                },
             },
             {
                 path: "plantModel",
                 component: PlantModel,
+                meta: {
+                    pageName: "种植模型",
+                },
             },
             {
                 path: "add",
                 component: AddPlantModel,
+                meta: {
+                    pageName: "种植模型",
+                },
             },
         ],
     },

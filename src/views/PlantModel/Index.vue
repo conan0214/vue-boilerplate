@@ -27,9 +27,26 @@
                     <el-table-column label="操作时间" prop="updateTime" width="180"></el-table-column>
                     <el-table-column label="操作" width="300">
                         <template #default="scope">
-                            <el-button type="text" size="small">查看详情</el-button>
-                            <el-button type="text" size="small" @click="openStopDialog(scope.row)">停用</el-button>
-                            <el-button type="text" size="small" @click="editPlantModel(scope.row)">编辑</el-button>
+                            <el-button link type="primary" size="small">查看详情</el-button>
+                            <el-button
+                                v-if="scope.row.state === 0"
+                                link
+                                type="primary"
+                                size="small"
+                                @click="openStopAndStartDialog(scope.row)"
+                                >停用</el-button
+                            >
+                            <el-button
+                                v-if="scope.row.state === 1"
+                                link
+                                type="primary"
+                                size="small"
+                                @click="openStopAndStartDialog(scope.row)"
+                                >启用</el-button
+                            >
+                            <el-button link type="primary" size="small" @click="editPlantModel(scope.row)"
+                                >编辑</el-button
+                            >
                         </template>
                     </el-table-column>
                 </el-table>
@@ -46,7 +63,11 @@
                 />
             </el-tab-pane>
         </el-tabs>
-        <el-dialog v-model="visibleForStop" title="停用" width="40%">
+        <el-dialog
+            v-model="visibleForStopAndStart"
+            :title="selectedPlantModel && selectedPlantModel.state === 0 ? '停用' : '启用'"
+            width="40%"
+        >
             <div class="dialog-content">
                 <div class="left-view">
                     <el-icon><WarningFilled /></el-icon>
@@ -63,13 +84,15 @@
                             >栽培方式：{{ selectedPlantModel && selectedPlantModel.growthName }}</span
                         >
                     </div>
-                    <div class="desc">确定停用此任务吗？</div>
+                    <div class="desc">
+                        确定{{ selectedPlantModel && selectedPlantModel.state === 0 ? "停用" : "启用" }}此任务吗？
+                    </div>
                 </div>
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button @click="closeStopDialog">取消</el-button>
-                    <el-button type="primary" @click="stopPlantModel">确认</el-button>
+                    <el-button @click="closeStopAndStartDialog">取消</el-button>
+                    <el-button type="primary" @click="stopAndStartPlantModel">确认</el-button>
                 </span>
             </template>
         </el-dialog>
@@ -77,6 +100,7 @@
 </template>
 
 <script>
+import dayjs from "dayjs";
 import { plantModelListApi, stopPlantModelApi } from "../../request/api.js";
 export default {
     name: "PlantModel",
@@ -107,7 +131,7 @@ export default {
                 pageSize: 10,
                 total: 0,
             },
-            visibleForStop: false, // 是否展示停用弹框
+            visibleForStopAndStart: false, // 是否展示停用弹框
             selectedPlantModel: null, // 已选择的种植模型
         };
     },
@@ -142,21 +166,21 @@ export default {
             });
         },
         // 停用种植模型
-        stopPlantModel() {
+        stopAndStartPlantModel() {
             const params = {
                 categoryTitle: this.selectedPlantModel.categoryTitle,
                 createName: this.selectedPlantModel.createName,
                 growthId: this.selectedPlantModel.growthId,
                 growthName: this.selectedPlantModel.growthName,
                 id: this.selectedPlantModel.id,
-                state: this.selectedPlantModel.state,
-                updateTime: this.selectedPlantModel.updateTime,
+                state: this.selectedPlantModel.state === 0 ? 1 : 0,
+                updateTime: dayjs().format("YYYY-MM-DD HH:mm:ss"),
                 varietyTitle: this.selectedPlantModel.varietyTitle,
             };
             return stopPlantModelApi(params).then((res) => {
                 if (res && res.code === "200") {
                     this.$message.success("操作成功");
-                    this.closeStopDialog();
+                    this.closeStopAndStartDialog();
                     this.getPlantModelList();
                 } else {
                     this.$message.error(res.message || "操作失败");
@@ -171,13 +195,13 @@ export default {
             this.getPlantModelList();
         },
         // 打开停用弹框
-        openStopDialog(row) {
+        openStopAndStartDialog(row) {
             this.selectedPlantModel = row;
-            this.visibleForStop = true;
+            this.visibleForStopAndStart = true;
         },
         // 关闭停用弹框
-        closeStopDialog() {
-            this.visibleForStop = false;
+        closeStopAndStartDialog() {
+            this.visibleForStopAndStart = false;
             this.selectedPlantModel = null;
         },
         // 创建种植模型
