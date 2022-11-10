@@ -46,8 +46,8 @@
         <el-tabs v-model="activeName">
             <el-tab-pane label="采购订单" name="purchaseOrder">
                 <el-table v-loading="loading" :data="purchaseOrderList" style="width: 100%">
-                    <el-table-column type="index"></el-table-column>
-                    <el-table-column label="订单号" prop="orderUuid" width="180"></el-table-column>
+                    <el-table-column type="index" fixed="left"></el-table-column>
+                    <el-table-column label="订单号" prop="orderUuid" width="140" fixed="left"></el-table-column>
                     <el-table-column label="订单内容" width="300">
                         <template #default="scope">
                             <div
@@ -72,7 +72,7 @@
                     <el-table-column label="归属企业" prop="userCompany" width="180"></el-table-column>
                     <el-table-column label="更进状态" prop="orderStatusText" width="180"></el-table-column>
                     <el-table-column label="最新更进" prop="followText" width="180"></el-table-column>
-                    <el-table-column label="操作" width="340">
+                    <el-table-column label="操作" width="260" fixed="right">
                         <template #default="scope">
                             <el-button link type="primary" size="small" @click="openOrderDetailDialog(scope.row)"
                                 >查看详情</el-button
@@ -89,17 +89,19 @@
                         </template>
                     </el-table-column>
                 </el-table>
-                <el-pagination
-                    class="pagination"
-                    v-model:currentPage="purchaseOrderForm.currentPage"
-                    v-model:page-size="purchaseOrderForm.pageSize"
-                    :page-sizes="[10, 20, 30, 40]"
-                    background
-                    layout="total, prev, pager, next, sizes, jumper"
-                    :total="purchaseOrderForm.total"
-                    @size-change="handleSizeChange"
-                    @current-change="handleCurrentChange"
-                />
+                <div class="pagination-div">
+                    <el-pagination
+                        class="pagination"
+                        v-model:currentPage="purchaseOrderForm.currentPage"
+                        v-model:page-size="purchaseOrderForm.pageSize"
+                        :page-sizes="[10, 20, 30, 40]"
+                        background
+                        layout="total, prev, pager, next, sizes, jumper"
+                        :total="purchaseOrderForm.total"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                    />
+                </div>
             </el-tab-pane>
             <el-tab-pane label="农资库" name="agricultureMaterials">
                 <MaterialsTab ref="materialsTab" :searchForm="materialsForm"></MaterialsTab>
@@ -517,9 +519,6 @@ export default {
             margin-right: 10px;
         }
     }
-    .pagination {
-        margin-top: 30px;
-    }
     .dialog-content {
         display: flex;
         align-items: center;
@@ -631,6 +630,11 @@ export default {
                 }
             }
         }
+    }
+    .pagination-div {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
     }
 }
 </style>

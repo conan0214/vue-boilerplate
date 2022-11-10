@@ -1,8 +1,8 @@
 <template>
     <div class="materials-tab-wrapper">
         <el-table :data="materialsList" style="width: 100%">
-            <el-table-column type="index"></el-table-column>
-            <el-table-column label="农资ID" prop="agriculturalNo" width="120"></el-table-column>
+            <el-table-column type="index" fixed="left"></el-table-column>
+            <el-table-column label="农资ID" prop="agriculturalNo" width="120" fixed="left"></el-table-column>
             <el-table-column label="农资名称" prop="title" width="150"></el-table-column>
             <el-table-column label="农资类型" width="120">
                 <template #default="scope">
@@ -17,7 +17,7 @@
             </el-table-column>
             <el-table-column label="状态" prop="statusText" width="180"> </el-table-column>
             <el-table-column label="厂家" prop="manufacturers" width="180"></el-table-column>
-            <el-table-column label="操作" width="300">
+            <el-table-column label="操作" width="200" fixed="right">
                 <template #default="scope">
                     <el-button link type="primary" size="small" @click="viewDetail(scope.row)">查看详情</el-button>
                     <el-button
@@ -40,17 +40,19 @@
                 </template>
             </el-table-column>
         </el-table>
-        <el-pagination
-            class="pagination"
-            v-model:currentPage="materialsForm.currentPage"
-            v-model:page-size="materialsForm.pageSize"
-            :page-sizes="[10, 20, 30, 40]"
-            background
-            layout="total, prev, pager, next, sizes, jumper"
-            :total="materialsForm.total"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-        />
+        <div class="pagination-div">
+            <el-pagination
+                class="pagination"
+                v-model:currentPage="materialsForm.currentPage"
+                v-model:page-size="materialsForm.pageSize"
+                :page-sizes="[10, 20, 30, 40]"
+                background
+                layout="total, prev, pager, next, sizes, jumper"
+                :total="materialsForm.total"
+                @size-change="handleSizeChange"
+                @current-change="handleCurrentChange"
+            />
+        </div>
         <el-dialog v-model="visibleForAdd" :title="isEdit ? '编辑农资' : '新建农资'" width="50%">
             <div class="dialog-body">
                 <el-form :model="addForm" label-width="120px" label-suffix=":">
@@ -612,9 +614,6 @@ export default {
     .tips {
         color: #c4c4c4;
     }
-    .pagination {
-        margin-top: 30px;
-    }
     .dialog-body {
         .banner {
             margin-right: 10px;
@@ -644,6 +643,11 @@ export default {
                 margin-top: 5px;
             }
         }
+    }
+    .pagination-div {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
     }
 }
 </style>

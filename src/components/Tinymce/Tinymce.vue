@@ -106,18 +106,16 @@ const containerWidth = computed(() => {
 const editorRef = ref(null);
 const fullscreen = ref(false);
 const elRef = ref(null);
-const tinymceContent = computed(() => props.modelValue);
 
 const initOptions = computed(() => {
     const { height, options, toolbar, plugins } = props;
-    const publicPath = "/";
     return {
         selector: `#${unref(tinymceId)}`,
         height,
         toolbar,
         menubar: "file edit insert view format table",
         plugins,
-        language_url: "/resource/tinymce/langs/zh_CN.js",
+        language_url: `${process.env.BASE_URL}resource/tinymce/langs/zh_CN.js`,
         language: "zh_CN",
         branding: false,
         default_link_target: "_blank",
@@ -125,8 +123,8 @@ const initOptions = computed(() => {
         object_resizing: false,
         auto_focus: true,
         skin: "oxide",
-        skin_url: "/resource/tinymce/skins/ui/oxide",
-        content_css: "/resource/tinymce/skins/ui/oxide/content.min.css",
+        skin_url: `${process.env.BASE_URL}resource/tinymce/skins/ui/oxide`,
+        content_css: `${process.env.BASE_URL}resource/tinymce/skins/ui/oxide/content.min.css`,
         paste_data_images: true,
         images_upload_handler: (blobInfo, success, failure) => {
             if (blobInfo.blob().size / 1024 / 1024 > 2) {

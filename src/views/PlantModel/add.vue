@@ -100,6 +100,7 @@
                             <span v-if="scope.row[item.parameterName] === 2" class="icon-high"></span>
                         </template>
                     </el-table-column>
+                    <el-table-column label="种植建议" prop="text"></el-table-column>
                     <el-table-column label="操作">
                         <template #default="scope">
                             <div class="btn">
@@ -122,8 +123,9 @@
                 <div class="guide-list">
                     <div v-for="(item, index) in farmGuideList" class="guide-item" :key="index">
                         <div v-for="child in item.imgList" class="guide-item-img" :key="child.url">
-                            <el-image class="img" :src="child.url" fit="cover" />
-                            <div class="btn-play"></div>
+                            <video v-if="isVideo(child.url)" class="video" :src="child.url" controls></video>
+                            <el-image v-else class="img" :src="child.url" fit="cover" />
+                            <!-- <div class="btn-play"></div> -->
                             <div class="btns">
                                 <el-icon class="icon" @click="openFarmGuideDialog(item)"><Edit /></el-icon>
                                 <el-icon class="icon" @click="delFarmGuide(index)"><Delete /></el-icon>
@@ -145,15 +147,10 @@
                 </div>
                 <div class="guide-list">
                     <div v-for="(item, index) in cureGuideList" class="guide-item" :key="index">
-                        <div class="guide-item-img">
-                            <el-image
-                                v-for="child in item.imgList"
-                                class="img"
-                                :src="child.url"
-                                fit="cover"
-                                :key="child.url"
-                            />
-                            <div class="btn-play"></div>
+                        <div v-for="child in item.imgList" class="guide-item-img" :key="child.url">
+                            <video v-if="isVideo(child.url)" class="video" :src="child.url" controls></video>
+                            <el-image v-else class="img" :src="child.url" fit="cover" />
+                            <!-- <div class="btn-play"></div> -->
                             <div class="btns">
                                 <el-icon class="icon" @click="openCureGuideDialog(item)"><Edit /></el-icon>
                                 <el-icon class="icon" @click="delCureGuide(index)"><Delete /></el-icon>
@@ -169,7 +166,13 @@
             <el-button plain @click="goBack">取消</el-button>
             <el-button class="btn-save" type="primary" @click="savePlantModel">保存</el-button>
         </div>
-        <el-dialog v-model="visibleForModel" title="添加生长阶段" width="50%" @close="closeAddGrowthStageDialog">
+        <el-dialog
+            v-model="visibleForModel"
+            title="添加生长阶段"
+            width="50%"
+            :close-on-click-modal="false"
+            @close="closeAddGrowthStageDialog"
+        >
             <div class="dialog-body">
                 <el-form :model="modelForm" label-width="80px" label-suffix=":">
                     <el-form-item label="阶段名称">
@@ -241,7 +244,7 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForDelModel" title="删除生长阶段" width="40%">
+        <el-dialog v-model="visibleForDelModel" title="删除生长阶段" width="40%" :close-on-click-modal="false">
             <div class="dialog-content">
                 <div class="left-view">
                     <el-icon><WarningFilled /></el-icon>
@@ -260,7 +263,7 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForSuggestion" title="添加种植建议" width="50%">
+        <el-dialog v-model="visibleForSuggestion" :close-on-click-modal="false" title="添加种植建议" width="50%">
             <div class="dialog-body">
                 <div class="card-table">
                     <div class="card-table-row">
@@ -298,12 +301,18 @@
             </div>
             <template #footer>
                 <span class="dialog-footer">
-                    <el-button>取消</el-button>
+                    <el-button @click="closePlantSuggestion">取消</el-button>
                     <el-button type="primary" @click="savePlantSuggestion">保存</el-button>
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForFarmGuide" title="添加农事指导" width="50%" @close="closeFarmGuideDialog">
+        <el-dialog
+            v-model="visibleForFarmGuide"
+            title="添加农事指导"
+            width="50%"
+            :close-on-click-modal="false"
+            @close="closeFarmGuideDialog"
+        >
             <div class="dialog-body">
                 <el-form :model="farmGuideForm" label-width="100px" label-suffix=":">
                     <el-form-item label="参考视频">
@@ -337,7 +346,13 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForCureGuide" title="添加病虫害防治知道" width="50%" @close="closeCureGuideDialog">
+        <el-dialog
+            v-model="visibleForCureGuide"
+            title="添加病虫害防治知道"
+            width="50%"
+            :close-on-click-modal="false"
+            @close="closeCureGuideDialog"
+        >
             <div class="dialog-body">
                 <el-form :model="cureGuideForm" label-width="100px" label-suffix=":">
                     <el-form-item label="参考视频">
@@ -643,6 +658,14 @@ export default {
         },
         // 保存生长阶段
         saveGrowthStage() {
+            if (
+                this.modelForm.growPlantModelDetailBos.some(
+                    (item) => !item.parameterName || !item.leastValue || !item.maxValue || !item.unit
+                )
+            ) {
+                this.$message.warning("请填写完整的参考指标(参数名、最大/小值、单位)！");
+                return;
+            }
             const params = {
                 createName: "",
                 growModelId: this.plantModelId,
@@ -783,22 +806,23 @@ export default {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
                     const index = this.farmGuideList.findIndex((item) => item.id === this.farmGuideForm.id);
-                    if (index === -1) {
-                        this.farmGuideList.push({
-                            ...res.data,
-                            imgList: [
-                                {
-                                    url: res.data.video,
-                                    response: {
-                                        data: {
-                                            imageUrl: res.data.video,
-                                        },
+                    const item = {
+                        ...res.data,
+                        imgList: [
+                            {
+                                url: res.data.video,
+                                response: {
+                                    data: {
+                                        imageUrl: res.data.video,
                                     },
                                 },
-                            ],
-                        });
+                            },
+                        ],
+                    };
+                    if (index === -1) {
+                        this.farmGuideList.push(item);
                     } else {
-                        this.farmGuideList.splice(index, 1, res.data);
+                        this.farmGuideList.splice(index, 1, item);
                     }
                     this.closeFarmGuideDialog();
                 } else {
@@ -840,22 +864,23 @@ export default {
                 if (res && res.code === "200") {
                     this.$message.success("保存成功");
                     const index = this.cureGuideList.findIndex((item) => item.id === this.cureGuideForm.id);
-                    if (index === -1) {
-                        this.cureGuideList.push({
-                            ...res.data,
-                            imgList: [
-                                {
-                                    url: res.data.video,
-                                    response: {
-                                        data: {
-                                            imageUrl: res.data.video,
-                                        },
+                    const item = {
+                        ...res.data,
+                        imgList: [
+                            {
+                                url: res.data.video,
+                                response: {
+                                    data: {
+                                        imageUrl: res.data.video,
                                     },
                                 },
-                            ],
-                        });
+                            },
+                        ],
+                    };
+                    if (index === -1) {
+                        this.cureGuideList.push(item);
                     } else {
-                        this.cureGuideList.splice(index, 1, res.data);
+                        this.cureGuideList.splice(index, 1, item);
                     }
                     this.closeCureGuideDialog();
                 } else {
@@ -941,6 +966,11 @@ export default {
             };
             return stateObj[state] || "";
         },
+        // 是否为视频
+        isVideo(url) {
+            const videoReg = /.(mp4|MP4|3gp|3GP)$/;
+            return videoReg.test(url);
+        },
     },
 };
 </script>
@@ -1018,7 +1048,12 @@ export default {
                         width: 200px;
                         height: 140px;
                         border-radius: 6px;
+                        background-color: #f0f0f0;
                         .img {
+                            width: 100%;
+                            height: 100%;
+                        }
+                        .video {
                             width: 100%;
                             height: 100%;
                         }

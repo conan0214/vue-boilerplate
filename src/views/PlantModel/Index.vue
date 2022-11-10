@@ -14,8 +14,8 @@
         <el-tabs v-model="activeName">
             <el-tab-pane label="植物模型列表" name="plantModelTab">
                 <el-table :data="plantModelList" style="width: 100%">
-                    <el-table-column type="index"></el-table-column>
-                    <el-table-column label="植物种类" prop="categoryTitle" width="120"></el-table-column>
+                    <el-table-column type="index" fixed="left"></el-table-column>
+                    <el-table-column label="植物种类" prop="categoryTitle" width="120" fixed="left"></el-table-column>
                     <el-table-column label="植物品种" prop="varietyTitle" width="150"></el-table-column>
                     <el-table-column label="栽培方式" width="120">
                         <template #default="scope">
@@ -25,9 +25,11 @@
                     <el-table-column label="模型状态" prop="stateText" width="120"></el-table-column>
                     <el-table-column label="创建人" prop="createName" width="180"></el-table-column>
                     <el-table-column label="操作时间" prop="updateTime" width="180"></el-table-column>
-                    <el-table-column label="操作" width="300">
+                    <el-table-column label="操作" width="200" fixed="right">
                         <template #default="scope">
-                            <el-button link type="primary" size="small">查看详情</el-button>
+                            <el-button link type="primary" size="small" @click="openDetailDialog(scope.row)"
+                                >查看详情</el-button
+                            >
                             <el-button
                                 v-if="scope.row.state === 0"
                                 link
@@ -50,17 +52,19 @@
                         </template>
                     </el-table-column>
                 </el-table>
-                <el-pagination
-                    class="pagination"
-                    v-model:currentPage="plantModelForm.currentPage"
-                    v-model:page-size="plantModelForm.pageSize"
-                    :page-sizes="[10, 20, 30, 40]"
-                    background
-                    layout="total, prev, pager, next, sizes, jumper"
-                    :total="plantModelForm.total"
-                    @size-change="handleSizeChange"
-                    @current-change="handleCurrentChange"
-                />
+                <div class="pagination-div">
+                    <el-pagination
+                        class="pagination"
+                        v-model:currentPage="plantModelForm.currentPage"
+                        v-model:page-size="plantModelForm.pageSize"
+                        :page-sizes="[10, 20, 30, 40]"
+                        background
+                        layout="total, prev, pager, next, sizes, jumper"
+                        :total="plantModelForm.total"
+                        @size-change="handleSizeChange"
+                        @current-change="handleCurrentChange"
+                    />
+                </div>
             </el-tab-pane>
         </el-tabs>
         <el-dialog
@@ -96,14 +100,23 @@
                 </span>
             </template>
         </el-dialog>
+        <PlantModelDetail
+            :isShow="isShowDetailDialog"
+            :plantModelId="selectedPlantModel && selectedPlantModel.id"
+            @close="closeDetailDialog"
+        ></PlantModelDetail>
     </div>
 </template>
 
 <script>
 import dayjs from "dayjs";
 import { plantModelListApi, stopPlantModelApi } from "../../request/api.js";
+import PlantModelDetail from "./components/detail.vue";
 export default {
     name: "PlantModel",
+    components: {
+        PlantModelDetail,
+    },
     data() {
         return {
             activeName: "plantModelTab",
@@ -133,6 +146,7 @@ export default {
             },
             visibleForStopAndStart: false, // 是否展示停用弹框
             selectedPlantModel: null, // 已选择的种植模型
+            isShowDetailDialog: false, // 是否展示详情弹框
         };
     },
     mounted() {
@@ -221,6 +235,16 @@ export default {
                 },
             });
         },
+        // 打开详情弹框
+        openDetailDialog(row) {
+            this.selectedPlantModel = row;
+            this.isShowDetailDialog = true;
+        },
+        // 关闭详情弹框
+        closeDetailDialog() {
+            this.isShowDetailDialog = false;
+            this.selectedPlantModel = null;
+        },
     },
 };
 </script>
@@ -263,9 +287,6 @@ export default {
         .name {
             margin-right: 10px;
         }
-    }
-    .pagination {
-        margin-top: 30px;
     }
     .dialog-content {
         display: flex;
@@ -378,6 +399,11 @@ export default {
                 }
             }
         }
+    }
+    .pagination-div {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
     }
 }
 </style>

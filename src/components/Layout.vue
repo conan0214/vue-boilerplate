@@ -9,7 +9,7 @@
                     active-text-color="#3A7BFF"
                     background-color="#001529"
                     class="el-menu-vertical"
-                    default-active="1"
+                    :default-active="defaultIndex"
                     text-color="#fff"
                     @select="selectMenu"
                 >
@@ -67,12 +67,21 @@ export default {
     data() {
         return {
             pageName: "",
+            defaultIndex: "1",
         };
     },
     watch: {
         $route(to) {
             this.pageName = to.meta.pageName;
         },
+    },
+    mounted() {
+        this.pageName = this.$route.meta.pageName;
+        if (this.pageName === "农资订单") {
+            this.defaultIndex = "1";
+        } else {
+            this.defaultIndex = "2";
+        }
     },
     methods: {
         selectMenu(index) {
