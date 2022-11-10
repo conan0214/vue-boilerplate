@@ -382,7 +382,7 @@ import {
     savePlantSuggestionApi,
     saveFarmGuideApi,
     saveCureGuideApi,
-    growthStageList,
+    growthStageListApi,
     suggestionListApi,
     farmGuideListApi,
     cureGuideListApi,
@@ -399,6 +399,7 @@ export default {
     name: "Add",
     data() {
         return {
+            plantModelId: "", // 种植模型ID
             uploadUrl,
             growthTypeList: [], // 栽培方式
             form: {
@@ -463,7 +464,18 @@ export default {
         },
     },
     mounted() {
+        this.plantModelId = this.$route.query.id;
         this.getGrowthTypeList();
+        // 编辑
+        if (this.plantModelId) {
+            this.getPlantModelDetail();
+            this.getGrowthStageList().then(() => {
+                this.getStandardList();
+            });
+            this.getPlantSuggestionList();
+            this.getFarmGuideList();
+            this.getCureGuideList();
+        }
     },
     methods: {
         // 栽培方式列表
@@ -477,6 +489,89 @@ export default {
         },
         goBack() {
             this.$router.back();
+        },
+        // 获取种植模型详情
+        getPlantModelDetail() {
+            const params = {
+                id: this.plantModelId,
+            };
+            return plantModelDetailApi(params).then((res) => {
+                if (res && res.data) {
+                    this.form = {
+                        categoryTitle: res.data.categoryTitle,
+                        varietyTitle: res.data.varietyTitle,
+                        growthId: res.data.growthId,
+                    };
+                }
+            });
+        },
+        // 获取生长阶段列表
+        getGrowthStageList() {
+            const params = {
+                id: this.plantModelId,
+            };
+            return growthStageListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.growthStageList = res.data;
+                }
+            });
+        },
+        // 获取种植建议列表
+        getPlantSuggestionList() {
+            const params = {
+                id: this.plantModelId,
+            };
+            return suggestionListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.tableList = res.data;
+                }
+            });
+        },
+        // 获取农事指导列表
+        getFarmGuideList() {
+            const params = {
+                id: this.plantModelId,
+            };
+            return farmGuideListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.farmGuideList = res.data.map((item) => {
+                        item.imgList = [
+                            {
+                                url: item.video,
+                                response: {
+                                    data: {
+                                        imageUrl: item.video,
+                                    },
+                                },
+                            },
+                        ];
+                        return item;
+                    });
+                }
+            });
+        },
+        // 获取农事指导列表
+        getCureGuideList() {
+            const params = {
+                id: this.plantModelId,
+            };
+            return cureGuideListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.cureGuideList = res.data.map((item) => {
+                        item.imgList = [
+                            {
+                                url: item.video,
+                                response: {
+                                    data: {
+                                        imageUrl: item.video,
+                                    },
+                                },
+                            },
+                        ];
+                        return item;
+                    });
+                }
+            });
         },
         // 选择生长阶段
         selectGrowthStage(index) {
@@ -550,7 +645,7 @@ export default {
         saveGrowthStage() {
             const params = {
                 createName: "",
-                growModelId: "",
+                growModelId: this.plantModelId,
                 growPlantModelDetailBos: this.modelForm.growPlantModelDetailBos,
                 id: this.modelForm.id,
                 image: "",
@@ -623,13 +718,13 @@ export default {
         },
         // 删除种植参考建议
         delPlantSuggestion(index) {
-            console.log(index);
+            this.tableList.splice(index, 1);
         },
         // 保存种植参考建议
         savePlantSuggestion() {
             const params = {
                 createName: "",
-                growModelId: "",
+                growModelId: this.plantModelId,
                 growPlantAdviseDetailBos: this.standardList,
                 id: this.suggestionForm.id,
                 text: this.suggestionForm.suggestion,
@@ -674,7 +769,7 @@ export default {
         // 保存农事指导
         saveFarmGuide() {
             const params = {
-                growModelId: "",
+                growModelId: this.plantModelId,
                 id: this.farmGuideForm.id,
                 text: this.farmGuideForm.text,
                 title: this.farmGuideForm.title,
@@ -731,7 +826,7 @@ export default {
         // 保存防治病虫害指导
         saveCureGuide() {
             const params = {
-                growModelId: "",
+                growModelId: this.plantModelId,
                 id: this.cureGuideForm.id,
                 text: this.cureGuideForm.text,
                 title: this.cureGuideForm.title,
@@ -782,11 +877,11 @@ export default {
                 growPreventionGuideIds: "",
                 growthId: this.form.growthId,
                 growthName: "",
-                id: 0,
+                id: this.plantModelId,
                 varietyTitle: this.form.varietyTitle,
             };
             const growthTypeItem = this.growthTypeList.find((item) => item.id === this.form.growthId);
-            params.growthName = growthTypeItem && growthTypeItem.label;
+            params.growthName = growthTypeItem && growthTypeItem.title;
             // 生长阶段
             if (this.growthStageList.length > 0) {
                 params.growModelIds = this.growthStageList.map((item) => item.id).join(",");

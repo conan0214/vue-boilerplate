@@ -74,7 +74,7 @@ const plantModelListApi = function (params) {
 
 // 种植模型详情
 const plantModelDetailApi = function (params) {
-    return request.post("/api/v1/adam/adminGrowModel/list", params);
+    return request.post("/api/v1/adam/adminGrowModel/getGrowModel", params);
 };
 
 // 停止种植模型

@@ -29,7 +29,7 @@
                         <template #default="scope">
                             <el-button type="text" size="small">查看详情</el-button>
                             <el-button type="text" size="small" @click="openStopDialog(scope.row)">停用</el-button>
-                            <el-button type="text" size="small">编辑</el-button>
+                            <el-button type="text" size="small" @click="editPlantModel(scope.row)">编辑</el-button>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -187,6 +187,15 @@ export default {
         // 搜索
         search() {
             this.getPlantModelList();
+        },
+        // 编辑种植模型
+        editPlantModel(row) {
+            this.$router.push({
+                path: "/add",
+                query: {
+                    id: row.id,
+                },
+            });
         },
     },
 };
