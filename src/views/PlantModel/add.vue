@@ -87,7 +87,7 @@
                         >
                     </div>
                 </div>
-                <el-table class="section-table" :data="tableData" :cell-class-name="getCellClassName">
+                <el-table class="section-table" :data="tableData" max-height="500" :cell-class-name="getCellClassName">
                     <el-table-column
                         v-for="(item, index) in standardList"
                         :key="index"
@@ -185,14 +185,27 @@
                     </el-form-item>
                     <el-form-item label="参考图">
                         <el-upload
+                            v-if="modelForm.imgList.length === 0"
                             v-model:file-list="modelForm.imgList"
                             :action="uploadUrl"
-                            list-type="picture-card"
+                            :show-file-list="false"
                             :limit="1"
                         >
-                            <el-icon><Camera /></el-icon>
-                            添加参考图
+                            <div class="btn-upload">
+                                <el-icon><Camera /></el-icon>
+                                <div>添加参考图</div>
+                            </div>
                         </el-upload>
+                        <div class="img-list">
+                            <div v-for="(item, index) in modelForm.imgList" class="img-item" :key="index">
+                                <el-icon class="icon" @click="delImgForGrowthStage(index)"><Delete /></el-icon>
+                                <el-image
+                                    class="img"
+                                    :src="item.response && item.response.data && item.response.data.imageUrl"
+                                    fit="cover"
+                                />
+                            </div>
+                        </div>
                     </el-form-item>
                     <el-form-item label="参考指标"> </el-form-item>
                     <div class="standard-list">
@@ -322,13 +335,27 @@
                 <el-form :model="farmGuideForm" label-width="100px" label-suffix=":">
                     <el-form-item label="参考视频">
                         <el-upload
+                            v-if="farmGuideForm.imgList.length === 0"
                             v-model:file-list="farmGuideForm.imgList"
                             :action="uploadUrl"
-                            list-type="picture-card"
+                            :show-file-list="false"
+                            :limit="1"
                         >
-                            <el-icon><Camera /></el-icon>
-                            点击上传视频
+                            <div class="btn-upload">
+                                <el-icon><Camera /></el-icon>
+                                点击上传视频
+                            </div>
                         </el-upload>
+                        <div class="img-list">
+                            <div v-for="(item, index) in farmGuideForm.imgList" class="img-item" :key="index">
+                                <el-icon class="icon" @click="delImgForFarmGuide(index)"><Delete /></el-icon>
+                                <video
+                                    class="video"
+                                    :src="item.response && item.response.data && item.response.data.imageUrl"
+                                    controls
+                                ></video>
+                            </div>
+                        </div>
                     </el-form-item>
                     <el-form-item label="标题">
                         <el-input v-model="farmGuideForm.title" clearable placeholder="请输入指导标题" />
@@ -362,13 +389,27 @@
                 <el-form :model="cureGuideForm" label-width="100px" label-suffix=":">
                     <el-form-item label="参考视频">
                         <el-upload
+                            v-if="cureGuideForm.imgList.length === 0"
                             v-model:file-list="cureGuideForm.imgList"
                             :action="uploadUrl"
-                            list-type="picture-card"
+                            :show-file-list="false"
+                            :limit="1"
                         >
-                            <el-icon><Camera /></el-icon>
-                            点击上传视频
+                            <div class="btn-upload">
+                                <el-icon><Camera /></el-icon>
+                                点击上传视频
+                            </div>
                         </el-upload>
+                        <div class="img-list">
+                            <div v-for="(item, index) in cureGuideForm.imgList" class="img-item" :key="index">
+                                <el-icon class="icon" @click="delImgForCureGuide(index)"><Delete /></el-icon>
+                                <video
+                                    class="video"
+                                    :src="item.response && item.response.data && item.response.data.imageUrl"
+                                    controls
+                                ></video>
+                            </div>
+                        </div>
                     </el-form-item>
                     <el-form-item label="标题">
                         <el-input v-model="cureGuideForm.title" clearable placeholder="请输入指导标题" />
@@ -652,7 +693,17 @@ export default {
         // 删除生长阶段
         delGrowthStage(index, e) {
             e.stopPropagation();
-            this.growthStageList.splice(index, 1);
+            this.$confirm("确认删除此生长阶段吗？", "删除生长阶段", {
+                confirmButtonText: "确认",
+                cancelButtonText: "取消",
+                type: "warning",
+            })
+                .then(() => {
+                    this.growthStageList.splice(index, 1);
+                })
+                .catch(() => {
+                    console.log("取消");
+                });
         },
         // 添加参考指标
         addStandard() {
@@ -666,6 +717,10 @@ export default {
         // 删除参考指标
         delStandard(index) {
             this.modelForm.growPlantModelDetailBos.splice(index, 1);
+        },
+        // 删除生长阶段的图片
+        delImgForGrowthStage(index) {
+            this.modelForm.imgList.splice(index, 1);
         },
         // 保存生长阶段
         saveGrowthStage() {
@@ -795,7 +850,9 @@ export default {
         openFarmGuideDialog(row) {
             if (row) {
                 this.isEditForFarmGuide = true;
-                this.farmGuideForm = row;
+                this.farmGuideForm = {
+                    ...row,
+                };
             }
             this.visibleForFarmGuide = true;
         },
@@ -823,6 +880,10 @@ export default {
                 .catch(() => {
                     console.log("取消");
                 });
+        },
+        // 删除农事指导的视频
+        delImgForFarmGuide(index) {
+            this.farmGuideForm.imgList.splice(index, 1);
         },
         // 保存农事指导
         saveFarmGuide() {
@@ -869,7 +930,9 @@ export default {
         openCureGuideDialog(row) {
             if (row) {
                 this.isEditForCureGuide = true;
-                this.cureGuideForm = row;
+                this.cureGuideForm = {
+                    ...row,
+                };
             }
             this.visibleForCureGuide = true;
         },
@@ -938,6 +1001,10 @@ export default {
                 .catch(() => {
                     console.log("取消");
                 });
+        },
+        // 删除防治病虫害的视频
+        delImgForCureGuide(index) {
+            this.cureGuideForm.imgList.splice(index, 1);
         },
         // 保存种植模型
         savePlantModel() {
@@ -1051,9 +1118,6 @@ export default {
 .add-plant-model-wrapper {
     padding: 10px 30px;
     background: #fff;
-    .btn-back {
-        // color: #1890FF;
-    }
     .title {
         font-size: 16px;
         font-weight: 500;
@@ -1087,12 +1151,15 @@ export default {
             }
             .guide-list {
                 display: flex;
+                flex-wrap: wrap;
                 .guide-item {
-                    margin-top: 10px;
+                    flex-shrink: 0;
+                    margin-top: 15px;
                     margin-right: 20px;
+                    width: 200px;
                     &-img {
                         position: relative;
-                        width: 200px;
+                        width: 100%;
                         height: 140px;
                         border-radius: 6px;
                         background-color: #f0f0f0;
@@ -1125,6 +1192,10 @@ export default {
                             .icon {
                                 margin-left: 5px;
                                 cursor: pointer;
+                                transition: all 0.3s ease;
+                                &:hover {
+                                    transform: scale(1.2);
+                                }
                             }
                         }
                     }
@@ -1165,9 +1236,8 @@ export default {
                         justify-content: space-between;
                         align-items: center;
                         padding: 10px;
-                        .left-view {
-                        }
                         .right-view {
+                            flex-shrink: 0;
                             font-size: 18px;
                             color: #1890ff;
                             .icon {
@@ -1219,6 +1289,47 @@ export default {
         }
     }
     .dialog-body {
+        .btn-upload {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 148px;
+            height: 148px;
+            border: 1px dashed #ccc;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .img-list {
+            display: flex;
+            flex-wrap: wrap;
+            .img-item {
+                position: relative;
+                flex-shrink: 0;
+                margin-right: 15px;
+                margin-bottom: 15px;
+                width: 150px;
+                height: 150px;
+                border-radius: 6px;
+                .img {
+                    width: 100%;
+                    height: 100%;
+                }
+                .video {
+                    width: 100%;
+                    height: 100%;
+                }
+                .icon {
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    font-size: 18px;
+                    color: #999;
+                    cursor: pointer;
+                    z-index: 2;
+                }
+            }
+        }
         .standard-list {
             .standard-item {
                 display: flex;

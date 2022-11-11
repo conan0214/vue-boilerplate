@@ -62,7 +62,12 @@
                             <span class="tips">模型支持上下移动</span>
                         </div>
                     </div>
-                    <el-table class="section-table" :data="tableData" :cell-class-name="getCellClassName">
+                    <el-table
+                        class="section-table"
+                        :data="tableData"
+                        max-height="500"
+                        :cell-class-name="getCellClassName"
+                    >
                         <el-table-column
                             v-for="(item, index) in standardList"
                             :key="index"
@@ -384,12 +389,15 @@ export default {
             }
             .guide-list {
                 display: flex;
+                flex-wrap: wrap;
                 .guide-item {
-                    margin-top: 10px;
+                    flex-shrink: 0;
+                    margin-top: 15px;
                     margin-right: 20px;
+                    width: 200px;
                     &-img {
                         position: relative;
-                        width: 200px;
+                        width: 100%;
                         height: 140px;
                         border-radius: 6px;
                         background-color: #f0f0f0;
