@@ -168,7 +168,7 @@
         </div>
         <el-dialog
             v-model="visibleForModel"
-            title="添加生长阶段"
+            :title="isEditForGrowthStage ? '编辑生长阶段' : '添加生长阶段'"
             width="50%"
             :close-on-click-modal="false"
             @close="closeAddGrowthStageDialog"
@@ -263,7 +263,12 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForSuggestion" :close-on-click-modal="false" title="添加种植建议" width="50%">
+        <el-dialog
+            v-model="visibleForSuggestion"
+            :close-on-click-modal="false"
+            :title="isEditForSuggestion ? '编辑种植建议' : '添加种植建议'"
+            width="30%"
+        >
             <div class="dialog-body">
                 <div class="card-table">
                     <div class="card-table-row">
@@ -293,7 +298,7 @@
                             v-model="suggestionForm.suggestion"
                             clearable
                             :autosize="{ minRows: 3, maxRows: 5 }"
-                            placeholder="增加光照，降低温度…"
+                            placeholder="*种植建议中的关键词，可作为农事操作指导和病虫害防治的内容标签"
                             type="textarea"
                         />
                     </el-form-item>
@@ -308,8 +313,8 @@
         </el-dialog>
         <el-dialog
             v-model="visibleForFarmGuide"
-            title="添加农事指导"
-            width="50%"
+            :title="isEditForFarmGuide ? '编辑农事指导' : '添加农事指导'"
+            width="35%"
             :close-on-click-modal="false"
             @close="closeFarmGuideDialog"
         >
@@ -348,8 +353,8 @@
         </el-dialog>
         <el-dialog
             v-model="visibleForCureGuide"
-            title="添加病虫害防治知道"
-            width="50%"
+            :title="isEditForCureGuide ? '编辑病虫害防治指导' : '添加病虫害防治指导'"
+            width="35%"
             :close-on-click-modal="false"
             @close="closeCureGuideDialog"
         >
@@ -421,6 +426,7 @@ export default {
             selectedGrowthStageIndex: -1, // 已选择的生长阶段索引
             standardList: [], // 生长阶段下的参数列表
             tableList: [],
+            isEditForGrowthStage: false, // 是否编辑生长阶段
             modelForm: {
                 // 添加、编辑模型
                 id: 0,
@@ -438,10 +444,12 @@ export default {
             visibleForModel: false, // 是否展示添加、编辑生长阶段弹框
             visibleForDelModel: false, // 是否展示删除生长阶段弹框
             visibleForSuggestion: false, // 是否展示添加、编辑种植建议弹框
+            isEditForSuggestion: false, // 是否编辑种植建议
             suggestionForm: {
                 suggestion: "",
             },
             visibleForFarmGuide: false, // 是否展示添加、编辑农事指导的弹框
+            isEditForFarmGuide: false, // 是否编辑农事指导
             farmGuideForm: {
                 id: 0,
                 imgList: [],
@@ -450,6 +458,7 @@ export default {
             },
             farmGuideList: [],
             visibleForCureGuide: false, // 是否展示添加、编辑病虫害防治指导的弹框
+            isEditForCureGuide: false, // 是否编辑防治病虫害指导
             cureGuideForm: {
                 id: 0,
                 imgList: [],
@@ -598,6 +607,7 @@ export default {
                 e.stopPropagation();
             }
             if (row) {
+                this.isEditForGrowthStage = true;
                 this.modelForm = {
                     id: row.id,
                     phaseName: row.phaseName,
@@ -623,6 +633,7 @@ export default {
         // 关闭添加生长阶段弹框
         closeAddGrowthStageDialog() {
             this.visibleForModel = false;
+            this.isEditForGrowthStage = false;
             this.modelForm = {
                 // 添加、编辑模型
                 id: 0,
@@ -723,6 +734,7 @@ export default {
             }
             this.getStandardList().then(() => {
                 if (row) {
+                    this.isEditForSuggestion = true;
                     this.suggestionForm = {
                         id: row.id,
                         suggestion: row.text,
@@ -735,13 +747,24 @@ export default {
         // 关闭种植参考建议弹框
         closePlantSuggestion() {
             this.visibleForSuggestion = false;
+            this.isEditForSuggestion = false;
             this.suggestionForm = {
                 suggestion: "",
             };
         },
         // 删除种植参考建议
         delPlantSuggestion(index) {
-            this.tableList.splice(index, 1);
+            this.$confirm("确认删除该条种植建议吗？", "删除种植建议", {
+                confirmButtonText: "确认",
+                cancelButtonText: "取消",
+                type: "warning",
+            })
+                .then(() => {
+                    this.tableList.splice(index, 1);
+                })
+                .catch(() => {
+                    console.log("取消");
+                });
         },
         // 保存种植参考建议
         savePlantSuggestion() {
@@ -771,6 +794,7 @@ export default {
         // 打开添加农事指导弹框
         openFarmGuideDialog(row) {
             if (row) {
+                this.isEditForFarmGuide = true;
                 this.farmGuideForm = row;
             }
             this.visibleForFarmGuide = true;
@@ -778,6 +802,7 @@ export default {
         // 关闭添加农事指导弹框
         closeFarmGuideDialog() {
             this.visibleForFarmGuide = false;
+            this.isEditForFarmGuide = false;
             this.farmGuideForm = {
                 id: 0,
                 imgList: [],
@@ -787,7 +812,17 @@ export default {
         },
         // 删除农事指导
         delFarmGuide(index) {
-            this.farmGuideList.splice(index, 1);
+            this.$confirm("确认删除该农事指导吗？", "删除", {
+                confirmButtonText: "确认",
+                cancelButtonText: "取消",
+                type: "warning",
+            })
+                .then(() => {
+                    this.farmGuideList.splice(index, 1);
+                })
+                .catch(() => {
+                    console.log("取消");
+                });
         },
         // 保存农事指导
         saveFarmGuide() {
@@ -833,6 +868,7 @@ export default {
         // 打开添加农事指导弹框
         openCureGuideDialog(row) {
             if (row) {
+                this.isEditForCureGuide = true;
                 this.cureGuideForm = row;
             }
             this.visibleForCureGuide = true;
@@ -840,6 +876,7 @@ export default {
         // 关闭添加农事指导弹框
         closeCureGuideDialog() {
             this.visibleForCureGuide = false;
+            this.isEditForCureGuide = false;
             this.cureGuideForm = {
                 id: 0,
                 imgList: [],
@@ -890,7 +927,17 @@ export default {
         },
         // 删除防治病虫害指导
         delCureGuide(index) {
-            this.cureGuideList.splice(index, 1);
+            this.$confirm("确认删除该防治病虫害指导吗？", "删除", {
+                confirmButtonText: "确认",
+                cancelButtonText: "取消",
+                type: "warning",
+            })
+                .then(() => {
+                    this.cureGuideList.splice(index, 1);
+                })
+                .catch(() => {
+                    console.log("取消");
+                });
         },
         // 保存种植模型
         savePlantModel() {

@@ -22,7 +22,11 @@
                             {{ scope.row.growthName }}
                         </template>
                     </el-table-column>
-                    <el-table-column label="模型状态" prop="stateText" width="120"></el-table-column>
+                    <el-table-column label="模型状态" prop="stateText" width="120">
+                        <template #default="scope">
+                            <span :class="getStatusClassName(scope.row.state)">{{ scope.row.stateText }}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column label="创建人" prop="createName" width="180"></el-table-column>
                     <el-table-column label="操作时间" prop="updateTime" width="180"></el-table-column>
                     <el-table-column label="操作" width="200" fixed="right">
@@ -89,7 +93,7 @@
                         >
                     </div>
                     <div class="desc">
-                        确定{{ selectedPlantModel && selectedPlantModel.state === 0 ? "停用" : "启用" }}此任务吗？
+                        确定{{ selectedPlantModel && selectedPlantModel.state === 0 ? "停用" : "启用" }}此模型吗？
                     </div>
                 </div>
             </div>
@@ -132,7 +136,7 @@ export default {
                     value: 0,
                 },
                 {
-                    label: "停用",
+                    label: "已停用",
                     value: 1,
                 },
             ],
@@ -245,6 +249,15 @@ export default {
             this.isShowDetailDialog = false;
             this.selectedPlantModel = null;
         },
+        // 获取当前状态类名
+        getStatusClassName(status) {
+            // 状态 0正常，1已停用
+            const obj = {
+                0: "status-start",
+                1: "status-stop",
+            };
+            return obj[status] || "";
+        },
     },
 };
 </script>
@@ -287,6 +300,12 @@ export default {
         .name {
             margin-right: 10px;
         }
+    }
+    .status-start {
+        color: #16b74e;
+    }
+    .status-stop {
+        color: #ec6a6a;
     }
     .dialog-content {
         display: flex;

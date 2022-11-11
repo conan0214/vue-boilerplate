@@ -70,8 +70,14 @@
                     </el-table-column>
                     <el-table-column label="提交人" prop="userName" width="180"></el-table-column>
                     <el-table-column label="归属企业" prop="userCompany" width="180"></el-table-column>
-                    <el-table-column label="更进状态" prop="orderStatusText" width="180"></el-table-column>
-                    <el-table-column label="最新更进" prop="followText" width="180"></el-table-column>
+                    <el-table-column label="跟进状态" prop="orderStatusText" width="180">
+                        <template #default="scope">
+                            <span :class="getStatusClassName(scope.row.orderStatus)">{{
+                                scope.row.orderStatusText
+                            }}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="最新跟进" prop="followText" width="180"></el-table-column>
                     <el-table-column label="操作" width="260" fixed="right">
                         <template #default="scope">
                             <el-button link type="primary" size="small" @click="openOrderDetailDialog(scope.row)"
@@ -302,11 +308,11 @@ export default {
                     value: -1,
                 },
                 {
-                    label: "上架",
+                    label: "已上架",
                     value: 0,
                 },
                 {
-                    label: "下架",
+                    label: "已下架",
                     value: 1,
                 },
             ],
@@ -369,6 +375,14 @@ export default {
             return purchaseOrderDetailApi(params).then((res) => {
                 if (res && res.data) {
                     this.selectedOrder = res.data;
+                    if (this.selectedOrder.agriculturalCartBos) {
+                        this.selectedOrder.agriculturalCartBos = this.selectedOrder.agriculturalCartBos.map((item) => {
+                            if (!item.agriculturalCount) {
+                                item.agriculturalCount = item.agriculturalBo.agriculturalCount * item.unit;
+                            }
+                            return item;
+                        });
+                    }
                     this.selectedOrder.time = dayjs(this.selectedOrder.orderTime).format("YYYY-MM-DD HH:mm:ss");
                 } else {
                     this.selectedOrder = null;
@@ -476,6 +490,17 @@ export default {
         searchMaterials() {
             this.$refs.materialsTab.getMaterialsList();
         },
+        // 获取当前状态类名
+        getStatusClassName(status) {
+            // 跟进状态 未跟进-0 1-已完成, 2-已关闭 3-已跟进 -1-全部 默认传-1
+            const obj = {
+                0: "status-wait",
+                1: "status-finish",
+                2: "status-close",
+                3: "status-follow",
+            };
+            return obj[status] || "";
+        },
     },
 };
 </script>
@@ -518,6 +543,18 @@ export default {
         .name {
             margin-right: 10px;
         }
+    }
+    .status-wait {
+        color: #f74b4b;
+    }
+    .status-finish {
+        color: #61c670;
+    }
+    .status-close {
+        color: #4b4b4b;
+    }
+    .status-follow {
+        color: #1890ff;
     }
     .dialog-content {
         display: flex;

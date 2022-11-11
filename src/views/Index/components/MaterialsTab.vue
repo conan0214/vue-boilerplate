@@ -9,13 +9,21 @@
                     {{ scope.row.agriculturalCategory }}
                 </template>
             </el-table-column>
-            <el-table-column label="参考价值（元）" prop="agriculturalPrice" width="150"></el-table-column>
+            <el-table-column label="参考单价（元）" prop="agriculturalPrice" width="150">
+                <template #default="scope">
+                    {{ scope.row.agriculturalPrice ? scope.row.agriculturalPrice.toFixed(2) : 0 }}
+                </template>
+            </el-table-column>
             <el-table-column label="规格" width="180">
                 <template #default="scope">
                     {{ scope.row.agriculturalCount }}{{ scope.row.unitweight }}/{{ scope.row.unitmeasurement }}
                 </template>
             </el-table-column>
-            <el-table-column label="状态" prop="statusText" width="180"> </el-table-column>
+            <el-table-column label="状态" prop="statusText" width="180">
+                <template #default="scope">
+                    <span :class="getStatusClassName(scope.row.status)">{{ scope.row.statusText }}</span>
+                </template>
+            </el-table-column>
             <el-table-column label="厂家" prop="manufacturers" width="180"></el-table-column>
             <el-table-column label="操作" width="200" fixed="right">
                 <template #default="scope">
@@ -53,7 +61,12 @@
                 @current-change="handleCurrentChange"
             />
         </div>
-        <el-dialog v-model="visibleForAdd" :title="isEdit ? '编辑农资' : '新建农资'" width="50%">
+        <el-dialog
+            v-model="visibleForAdd"
+            :title="isEdit ? '编辑农资' : '新建农资'"
+            width="50%"
+            :close-on-click-modal="false"
+        >
             <div class="dialog-body">
                 <el-form :model="addForm" label-width="120px" label-suffix=":">
                     <el-form-item label="农资名称">
@@ -150,17 +163,13 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForCancel" title="提示" width="40%">
+        <el-dialog v-model="visibleForCancel" title="提示" width="40%" :close-on-click-modal="false">
             <div class="dialog-content">
                 <div class="left-view">
                     <el-icon><WarningFilled /></el-icon>
                 </div>
                 <div class="right-view">
-                    <div class="title">
-                        <span class="title-item">提交人：13667316666</span>
-                        <span class="title-item">归属企业：湖南xxx农业公司</span>
-                    </div>
-                    <div class="desc">确定取消新建农资吗？</div>
+                    <div class="desc">确定取消{{ isEdit ? "编辑" : "新建" }}农资吗？</div>
                 </div>
             </div>
             <template #footer>
@@ -170,7 +179,13 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForDetail" title="农资详情" width="50%" @close="closeDetailDialog">
+        <el-dialog
+            v-model="visibleForDetail"
+            title="农资详情"
+            width="50%"
+            :close-on-click-modal="false"
+            @close="closeDetailDialog"
+        >
             <div v-if="selectedMaterials && selectedMaterials.agriculturalBo" class="dialog-body">
                 <el-form :model="addForm" label-width="120px" label-suffix=":">
                     <el-form-item label="农资名称">
@@ -211,7 +226,13 @@
                 </span>
             </template>
         </el-dialog>
-        <el-dialog v-model="visibleForOperate" title="农资上/下架" width="40%" @close="closeOperateMaterialsDialog">
+        <el-dialog
+            v-model="visibleForOperate"
+            :title="selectedMaterials && selectedMaterials.status === 0 ? '农资下架' : '农资上架'"
+            width="40%"
+            :close-on-click-modal="false"
+            @close="closeOperateMaterialsDialog"
+        >
             <div class="dialog-body">
                 <el-form label-width="120px" label-suffix=":">
                     <el-form-item label="农资ID">
@@ -278,11 +299,11 @@ export default {
                     value: -1,
                 },
                 {
-                    label: "上架",
+                    label: "已上架",
                     value: 0,
                 },
                 {
-                    label: "下架",
+                    label: "已下架",
                     value: 1,
                 },
             ],
@@ -586,6 +607,15 @@ export default {
         },
         // 富文本编辑器内容改变
         handleEditorChange() {},
+        // 获取当前状态类名
+        getStatusClassName(status) {
+            // 状态 0已上架，1已下架
+            const obj = {
+                0: "status-start",
+                1: "status-stop",
+            };
+            return obj[status] || "";
+        },
     },
 };
 </script>
@@ -613,6 +643,12 @@ export default {
     }
     .tips {
         color: #c4c4c4;
+    }
+    .status-start {
+        color: #16b74e;
+    }
+    .status-stop {
+        color: #ec6a6a;
     }
     .dialog-body {
         .banner {
