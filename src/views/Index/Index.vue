@@ -360,6 +360,14 @@ export default {
                     this.purchaseOrderList = res.data.map((item) => {
                         const element = this.orderStatusList.find((child) => child.value === item.orderStatus);
                         item.orderStatusText = (element && element.label) || "";
+                        if (item.agriculturalCartBos) {
+                            item.agriculturalCartBos = item.agriculturalCartBos.map((child) => {
+                                if (!child.agriculturalCount) {
+                                    child.agriculturalCount = child.agriculturalBo.agriculturalCount * child.unit;
+                                }
+                                return child;
+                            });
+                        }
                         return item;
                     });
                 } else {
