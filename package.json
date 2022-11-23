@@ -19,9 +19,11 @@
         "dayjs": "^1.11.6",
         "element-plus": "^2.2.5",
         "pinia": "^2.0.17",
+        "sortablejs": "^1.15.0",
         "tinymce": "^5.10.2",
         "vue": "^3.2.13",
         "vue-router": "^4.0.16",
+        "vuedraggable": "^4.1.0",
         "vuex": "^4.0.2"
     },
     "devDependencies": {

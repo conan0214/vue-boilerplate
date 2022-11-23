@@ -34,46 +34,49 @@
                         >
                     </div>
                 </div>
-                <div class="card-list">
-                    <div
-                        v-for="(item, index) in growthStageList"
-                        class="card-item"
-                        :class="{ 'card-item-active': index === selectedGrowthStageIndex }"
-                        :key="index"
-                        @click="selectGrowthStage(index)"
-                    >
-                        <div class="card-header">
-                            <div class="card-header-title">
-                                <div class="left-view">阶段{{ index + 1 }}：{{ item.phaseName }}</div>
-                                <div class="right-view">
-                                    <el-icon class="icon" @click="openAddGrowthStageDialog(item, $event)"
-                                        ><Edit
-                                    /></el-icon>
-                                    <el-icon class="icon" @click="delGrowthStage(index, $event)"><Delete /></el-icon>
+                <VueDraggable v-model="growthStageList" item-key="id" class="card-list">
+                    <template #item="{ element, index }">
+                        <div
+                            class="card-item"
+                            :class="{ 'card-item-active': index === selectedGrowthStageIndex }"
+                            :key="index"
+                            @click="selectGrowthStage(index)"
+                        >
+                            <div class="card-header">
+                                <div class="card-header-title">
+                                    <div class="left-view">阶段{{ index + 1 }}：{{ element.phaseName }}</div>
+                                    <div class="right-view">
+                                        <el-icon class="icon" @click="openAddGrowthStageDialog(element, $event)"
+                                            ><Edit
+                                        /></el-icon>
+                                        <el-icon class="icon" @click="delGrowthStage(index, $event)"
+                                            ><Delete
+                                        /></el-icon>
+                                    </div>
+                                </div>
+                                <div class="card-header-img">
+                                    <el-image class="img" :src="element.image" fit="cover" />
                                 </div>
                             </div>
-                            <div class="card-header-img">
-                                <el-image class="img" :src="item.image" fit="cover" />
-                            </div>
-                        </div>
-                        <div class="card-table">
-                            <div class="card-table-row">
-                                <div class="left-view">参数名</div>
-                                <div class="right-view">参数值</div>
-                            </div>
-                            <div
-                                v-for="(child, index) in item.growPlantModelDetailBos"
-                                class="card-table-row"
-                                :key="index"
-                            >
-                                <div class="left-view">{{ child.parameterName }}</div>
-                                <div class="right-view">
-                                    {{ child.leastValue }}-{{ child.maxValue }}{{ child.unit }}
+                            <div class="card-table">
+                                <div class="card-table-row">
+                                    <div class="left-view">参数名</div>
+                                    <div class="right-view">参数值</div>
+                                </div>
+                                <div
+                                    v-for="(child, index) in element.growPlantModelDetailBos"
+                                    class="card-table-row"
+                                    :key="index"
+                                >
+                                    <div class="left-view">{{ child.parameterName }}</div>
+                                    <div class="right-view">
+                                        {{ child.leastValue }}-{{ child.maxValue }}{{ child.unit }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </template>
+                </VueDraggable>
             </div>
             <div class="section">
                 <div class="section-title">
@@ -436,6 +439,8 @@
 </template>
 
 <script>
+import Sortable from "sortablejs";
+import VueDraggable from "vuedraggable";
 import {
     uploadUrl,
     saveGrowthStageApi,
@@ -453,6 +458,9 @@ import {
 } from "../../request/api.js";
 export default {
     name: "Add",
+    components: {
+        VueDraggable,
+    },
     data() {
         return {
             plantModelId: "", // 种植模型ID

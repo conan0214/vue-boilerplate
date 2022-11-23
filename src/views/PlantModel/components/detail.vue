@@ -21,13 +21,16 @@
                 </el-form>
                 <div class="section">
                     <div class="section-title">
-                        <div class="left-view">
-                            植物生长模型
-                            <span class="tips">模型支持左右移动</span>
-                        </div>
+                        <div class="left-view">植物生长模型</div>
                     </div>
                     <div class="card-list">
-                        <div v-for="(item, index) in growthStageList" class="card-item" :key="index">
+                        <div
+                            v-for="(item, index) in growthStageList"
+                            class="card-item"
+                            :class="{ 'card-item-active': index === selectedGrowthStageIndex }"
+                            :key="index"
+                            @click="selectGrowthStage(index)"
+                        >
                             <div class="card-header">
                                 <div class="card-header-title">
                                     <div class="left-view">阶段{{ index + 1 }}：{{ item.phaseName }}</div>
@@ -57,10 +60,7 @@
                 </div>
                 <div class="section">
                     <div class="section-title">
-                        <div class="left-view">
-                            种植参考建议
-                            <span class="tips">模型支持上下移动</span>
-                        </div>
+                        <div class="left-view">种植参考建议</div>
                     </div>
                     <el-table
                         class="section-table"
@@ -150,6 +150,7 @@ export default {
         return {
             visible: false,
             detailInfo: {}, // 种植模型详情
+            selectedGrowthStageIndex: -1, // 已选择的生长阶段索引
             growthStageList: [], // 植物生长阶段列表
             standardList: [], // 生长阶段下的参数列表
             tableList: [],
@@ -179,7 +180,11 @@ export default {
                 if (this.plantModelId) {
                     this.getPlantModelDetail();
                     this.getGrowthStageList().then(() => {
-                        this.getStandardList();
+                        if (this.growthStageList.length > 0) {
+                            this.selectedGrowthStageIndex = 0;
+                            this.getStandardList();
+                            this.getPlantSuggestionList();
+                        }
                     });
                     this.getPlantSuggestionList();
                     this.getFarmGuideList();
@@ -213,8 +218,17 @@ export default {
         },
         // 获取种植建议列表
         getPlantSuggestionList() {
+            if (this.growthStageList.length === 0) {
+                console.log("生长阶段列表为空");
+                return;
+            }
+            if (this.selectedGrowthStageIndex === -1) {
+                console.log("请先选择生长阶段");
+                return;
+            }
             const params = {
                 id: this.plantModelId,
+                growPlantId: this.growthStageList[this.selectedGrowthStageIndex].id,
             };
             return suggestionListApi(params).then((res) => {
                 if (res && res.data) {
@@ -273,8 +287,12 @@ export default {
             if (this.growthStageList.length === 0) {
                 return;
             }
+            if (this.selectedGrowthStageIndex === -1) {
+                console.log("请选择生长阶段");
+                return;
+            }
             const params = {
-                growPlantId: this.growthStageList.map((item) => item.id).join(","),
+                growPlantId: this.growthStageList[this.selectedGrowthStageIndex].id,
             };
             return standardListApi(params).then((res) => {
                 if (res && res.data) {
@@ -288,6 +306,13 @@ export default {
                     this.$message.error(res.message || "获取参数列表失败");
                 }
             });
+        },
+        // 选择生长阶段
+        selectGrowthStage(index) {
+            this.tableList = [];
+            this.selectedGrowthStageIndex = index;
+            this.getStandardList();
+            this.getPlantSuggestionList();
         },
         closeDialog() {
             this.$emit("close");
