@@ -152,6 +152,11 @@ const standardListApi = function (params) {
     return request.post("/api/v1/adam/adminGrowModel/getGrowPlantsParamList", params);
 };
 
+// 获取当前生长阶段的种植建议
+const stageSuggestionListApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getGrowPlantsAdviceList", params);
+};
+
 export {
     uploadUrl,
     uploadApi,
@@ -184,4 +189,5 @@ export {
     cureGuideListApi,
     savePlantModelApi,
     standardListApi,
+    stageSuggestionListApi,
 };

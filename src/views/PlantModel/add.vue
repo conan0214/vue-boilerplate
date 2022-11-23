@@ -535,9 +535,12 @@ export default {
         if (this.plantModelId) {
             this.getPlantModelDetail();
             this.getGrowthStageList().then(() => {
-                this.getStandardList();
+                if (this.growthStageList.length > 0) {
+                    this.selectedGrowthStageIndex = 0;
+                    this.getStandardList();
+                    this.getPlantSuggestionList();
+                }
             });
-            this.getPlantSuggestionList();
             this.getFarmGuideList();
             this.getCureGuideList();
         }
@@ -581,10 +584,19 @@ export default {
                 }
             });
         },
-        // 获取种植建议列表
+        // 获取当前生长阶段的种植建议列表
         getPlantSuggestionList() {
+            if (this.growthStageList.length === 0) {
+                console.log("生长阶段列表为空");
+                return;
+            }
+            if (this.selectedGrowthStageIndex === -1) {
+                console.log("请先选择生长阶段");
+                return;
+            }
             const params = {
                 id: this.plantModelId,
+                growPlantId: this.growthStageList[this.selectedGrowthStageIndex].id,
             };
             return suggestionListApi(params).then((res) => {
                 if (res && res.data) {
@@ -640,7 +652,10 @@ export default {
         },
         // 选择生长阶段
         selectGrowthStage(index) {
+            this.tableList = [];
             this.selectedGrowthStageIndex = index;
+            this.getStandardList();
+            this.getPlantSuggestionList();
         },
         // 打开添加生长阶段弹框
         openAddGrowthStageDialog(row, e) {
@@ -765,8 +780,12 @@ export default {
             if (this.growthStageList.length === 0) {
                 return;
             }
+            if (this.selectedGrowthStageIndex === -1) {
+                console.log("请选择生长阶段");
+                return;
+            }
             const params = {
-                growPlantId: this.growthStageList.map((item) => item.id).join(","),
+                growPlantId: this.growthStageList[this.selectedGrowthStageIndex].id,
             };
             return standardListApi(params).then((res) => {
                 if (res && res.data) {
@@ -785,6 +804,10 @@ export default {
         openPlantSuggestion(row) {
             if (this.growthStageList.length === 0) {
                 this.$message.warning("请先添加生长阶段");
+                return;
+            }
+            if (this.selectedGrowthStageIndex === -1) {
+                this.$message.warning("请选择生长阶段");
                 return;
             }
             this.getStandardList().then(() => {
@@ -826,6 +849,7 @@ export default {
             const params = {
                 createName: "",
                 growModelId: this.plantModelId,
+                growPlantModelId: this.growthStageList[this.selectedGrowthStageIndex].id,
                 growPlantAdviseDetailBos: this.standardList,
                 id: this.suggestionForm.id,
                 text: this.suggestionForm.suggestion,
@@ -1026,10 +1050,6 @@ export default {
                     // 生长阶段
                     if (this.growthStageList.length > 0) {
                         params.growModelIds = this.growthStageList.map((item) => item.id).join(",");
-                    }
-                    // 种植建议
-                    if (this.tableList.length > 0) {
-                        params.growAdviseIds = this.tableList.map((item) => item.id).join(",");
                     }
                     // 农事指导
                     if (this.farmGuideList.length > 0) {
