@@ -34,7 +34,13 @@
                         >
                     </div>
                 </div>
-                <VueDraggable v-model="growthStageList" item-key="id" class="card-list">
+                <VueDraggable
+                    v-model="growthStageList"
+                    item-key="id"
+                    class="card-list"
+                    @start="dragStart"
+                    @end="dragEnd"
+                >
                     <template #item="{ element, index }">
                         <div
                             class="card-item"
@@ -1112,6 +1118,15 @@ export default {
         isVideo(url) {
             const videoReg = /.(mp4|MP4|3gp|3GP)$/;
             return videoReg.test(url);
+        },
+        // 拖拽开始
+        dragStart() {},
+        // 拖拽结束
+        dragEnd(e) {
+            // 当前移动项是选中项
+            if (e.oldIndex === this.selectedGrowthStageIndex) {
+                this.selectedGrowthStageIndex = e.newIndex;
+            }
         },
     },
 };
