@@ -479,6 +479,7 @@ export default {
             },
             growthStageList: [], // 植物生长阶段列表
             selectedGrowthStageIndex: -1, // 已选择的生长阶段索引
+            selectedGrowthStage: null, // 已选择的生长阶段
             standardList: [], // 生长阶段下的参数列表
             tableList: [],
             isEditForGrowthStage: false, // 是否编辑生长阶段
@@ -551,6 +552,7 @@ export default {
             this.getGrowthStageList().then(() => {
                 if (this.growthStageList.length > 0) {
                     this.selectedGrowthStageIndex = 0;
+                    this.selectedGrowthStage = this.growthStageList[this.selectedGrowthStageIndex];
                     this.getStandardList();
                     this.getPlantSuggestionList();
                 }
@@ -668,6 +670,7 @@ export default {
         selectGrowthStage(index) {
             this.tableList = [];
             this.selectedGrowthStageIndex = index;
+            this.selectedGrowthStage = this.growthStageList[index];
             this.getStandardList();
             this.getPlantSuggestionList();
         },
@@ -1122,10 +1125,10 @@ export default {
         // 拖拽开始
         dragStart() {},
         // 拖拽结束
-        dragEnd(e) {
-            // 当前移动项是选中项
-            if (e.oldIndex === this.selectedGrowthStageIndex) {
-                this.selectedGrowthStageIndex = e.newIndex;
+        dragEnd() {
+            if (this.selectedGrowthStage) {
+                const index = this.growthStageList.findIndex((item) => item.id === this.selectedGrowthStage.id);
+                this.selectedGrowthStageIndex = index;
             }
         },
     },
