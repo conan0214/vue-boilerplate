@@ -461,6 +461,7 @@ import {
     plantModelDetailApi,
     growthTypeListApi,
     standardListApi,
+    delStageSuggestionApi,
 } from "../../request/api.js";
 export default {
     name: "Add",
@@ -855,7 +856,18 @@ export default {
                 type: "warning",
             })
                 .then(() => {
-                    this.tableList.splice(index, 1);
+                    const params = {
+                        id: this.tableList[index].id,
+                    };
+                    delStageSuggestionApi(params).then((res) => {
+                        if (res && res.code === "200") {
+                            this.$message.success("删除成功");
+                            this.tableList.splice(index, 1);
+                        } else {
+                            console.log(res);
+                            this.$message.error("删除失败");
+                        }
+                    });
                 })
                 .catch(() => {
                     console.log("取消");

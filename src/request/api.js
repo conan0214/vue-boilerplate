@@ -157,6 +157,11 @@ const stageSuggestionListApi = function (params) {
     return request.post("/api/v1/adam/adminGrowModel/getGrowPlantsAdviceList", params);
 };
 
+// 删除当前阶段的种植建议
+const delStageSuggestionApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/delPlantReferenceById", params);
+};
+
 export {
     uploadUrl,
     uploadApi,
@@ -190,4 +195,5 @@ export {
     savePlantModelApi,
     standardListApi,
     stageSuggestionListApi,
+    delStageSuggestionApi,
 };
