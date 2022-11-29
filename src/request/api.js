@@ -162,6 +162,11 @@ const delStageSuggestionApi = function (params) {
     return request.post("/api/v1/adam/adminGrowModel/delPlantReferenceById", params);
 };
 
+// 获取所有参数列表
+const allParamsListApi = function (params) {
+    return request.post("/api/v1/adam/adminGrowModel/getGrowPlantParam", params);
+};
+
 export {
     uploadUrl,
     uploadApi,
@@ -196,4 +201,5 @@ export {
     standardListApi,
     stageSuggestionListApi,
     delStageSuggestionApi,
+    allParamsListApi,
 };

@@ -225,12 +225,25 @@
                         >
                             <div class="standard-item-content">
                                 <div class="label">参数名：</div>
-                                <el-input
-                                    class="input"
-                                    v-model="item.parameterName"
-                                    :readonly="index === 0"
-                                    placeholder="请输入名称"
-                                />
+                                <template v-if="index === 0">
+                                    <el-input
+                                        class="input"
+                                        v-model="item.parameterName"
+                                        :readonly="index === 0"
+                                        placeholder="请输入名称"
+                                    />
+                                </template>
+                                <template v-else>
+                                    <el-select class="select" v-model="item.parameterName" placeholder="请选择">
+                                        <el-option
+                                            v-for="child in allParamsList"
+                                            :key="child.id"
+                                            :label="child.title"
+                                            :value="child.title"
+                                        >
+                                        </el-option>
+                                    </el-select>
+                                </template>
                             </div>
                             <div class="standard-item-content">
                                 <div class="label">参考值：</div>
@@ -462,6 +475,7 @@ import {
     growthTypeListApi,
     standardListApi,
     delStageSuggestionApi,
+    allParamsListApi,
 } from "../../request/api.js";
 export default {
     name: "Add",
@@ -528,6 +542,7 @@ export default {
                 varietyTitle: [{ required: true, message: "请输入种植品种", trigger: "blur" }],
                 growthId: [{ required: true, message: "请选择培育方式", trigger: "change" }],
             },
+            allParamsList: [], // 所有参数列表
         };
     },
     computed: {
@@ -547,6 +562,7 @@ export default {
     mounted() {
         this.plantModelId = this.$route.query.id;
         this.getGrowthTypeList();
+        this.getAllParamsList();
         // 编辑
         if (this.plantModelId) {
             this.getPlantModelDetail();
@@ -667,6 +683,17 @@ export default {
                 }
             });
         },
+        // 获取所有参数列表
+        getAllParamsList() {
+            const params = {};
+            allParamsListApi(params).then((res) => {
+                if (res && res.data) {
+                    this.allParamsList = res.data.map((item) => {
+                        return item;
+                    });
+                }
+            });
+        },
         // 选择生长阶段
         selectGrowthStage(index) {
             this.tableList = [];
@@ -741,7 +768,7 @@ export default {
         // 添加参考指标
         addStandard() {
             this.modelForm.growPlantModelDetailBos.push({
-                name: "",
+                parameterName: "",
                 min: undefined,
                 max: undefined,
                 unit: "",
@@ -759,7 +786,11 @@ export default {
         saveGrowthStage() {
             if (
                 this.modelForm.growPlantModelDetailBos.some(
-                    (item) => !item.parameterName || !item.leastValue || !item.maxValue || !item.unit
+                    (item) =>
+                        !item.parameterName ||
+                        (!item.leastValue && item.leastValue !== 0) ||
+                        !item.maxValue ||
+                        !item.unit
                 )
             ) {
                 this.$message.warning("请填写完整的参考指标(参数名、最大/小值、单位)！");
@@ -1401,6 +1432,9 @@ export default {
                         flex-shrink: 0;
                     }
                     .input {
+                        width: 140px;
+                    }
+                    .select {
                         width: 140px;
                     }
                     .line {
