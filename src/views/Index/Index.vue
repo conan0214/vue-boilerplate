@@ -69,6 +69,7 @@
                         </template>
                     </el-table-column>
                     <el-table-column label="提交人" prop="userName" width="180"></el-table-column>
+                    <el-table-column label="手机号码" prop="phoneNumber" width="180"></el-table-column>
                     <el-table-column label="归属企业" prop="userCompany" width="180"></el-table-column>
                     <el-table-column label="跟进状态" prop="orderStatusText" width="180">
                         <template #default="scope">
@@ -588,8 +589,10 @@ export default {
     .dialog-body {
         .list {
             .item {
+                margin-bottom: 15px;
                 padding: 10px 15px;
-                box-shadow: 0px 0px 21px 0px #e5ecf2;
+                box-shadow: 0px 0px 10px 0px #e5ecf2;
+                border: 1px solid #eee;
                 border-radius: 8px;
                 color: #383838;
                 &-title {

@@ -5,6 +5,7 @@
 </template>
 
 <script>
+import { getQueryString } from "./utils/index.js";
 export default {
     name: "App",
     props: [],
@@ -16,7 +17,16 @@ export default {
     watch: {},
     methods: {},
     created: function () {},
-    mounted: function () {},
+    mounted: function () {
+        // const tokenKey = '__token'
+        // let token = null
+        // if (getQueryString(tokenKey)) {
+        //     token = getQueryString(tokenKey)
+        // }
+        // if (this.$route.query[tokenKey]) {
+        //     token = this.$route.query[tokenKey]
+        // }
+    },
 };
 </script>
 
