@@ -1241,6 +1241,9 @@ export default {
                         cursor: pointer;
                     }
                 }
+                .suggestion {
+                    color: #1890ff;
+                }
             }
             .guide-list {
                 display: flex;
