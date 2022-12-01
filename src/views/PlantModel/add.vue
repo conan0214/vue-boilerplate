@@ -109,7 +109,11 @@
                             <span v-if="scope.row[item.parameterName] === 2" class="icon-high"></span>
                         </template>
                     </el-table-column>
-                    <el-table-column label="种植建议" prop="text"></el-table-column>
+                    <el-table-column label="种植建议" prop="text">
+                        <template #default="scope">
+                            <span class="suggestion">{{ scope.row.text }}</span>
+                        </template>
+                    </el-table-column>
                     <el-table-column label="操作">
                         <template #default="scope">
                             <div class="btn">
