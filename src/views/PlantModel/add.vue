@@ -182,7 +182,7 @@
         <el-dialog
             v-model="visibleForModel"
             :title="isEditForGrowthStage ? '编辑生长阶段' : '添加生长阶段'"
-            width="50%"
+            width="60%"
             :close-on-click-modal="false"
             @close="closeAddGrowthStageDialog"
         >
@@ -230,23 +230,40 @@
                             <div class="standard-item-content">
                                 <div class="label">参数名：</div>
                                 <template v-if="index === 0">
-                                    <el-input
-                                        class="input"
-                                        v-model="item.parameterName"
-                                        :readonly="index === 0"
-                                        placeholder="请输入名称"
-                                    />
+                                    <div class="parameter-name-div">
+                                        <el-input
+                                            class="input"
+                                            v-model="item.parameterName"
+                                            :readonly="index === 0"
+                                            placeholder="请输入名称"
+                                        />
+                                    </div>
                                 </template>
                                 <template v-else>
-                                    <el-select class="select" v-model="item.parameterName" placeholder="请选择">
-                                        <el-option
-                                            v-for="child in allParamsList"
-                                            :key="child.id"
-                                            :label="child.title"
-                                            :value="child.title"
-                                        >
-                                        </el-option>
-                                    </el-select>
+                                    <div class="parameter-name-div">
+                                        <div class="left-view">
+                                            <el-select
+                                                class="parameter-name-select"
+                                                v-model="item.parameterName"
+                                                placeholder="请选择"
+                                            >
+                                                <el-option
+                                                    v-for="child in allParamsList"
+                                                    :key="child.id"
+                                                    :label="child.title"
+                                                    :value="child.title"
+                                                >
+                                                </el-option>
+                                            </el-select>
+                                        </div>
+                                        <div v-if="item.parameterName === '自定义'" class="right-view">
+                                            <el-input
+                                                class="parameter-name-input"
+                                                v-model="item.customParameterName"
+                                                placeholder="请输入参数名称"
+                                            />
+                                        </div>
+                                    </div>
                                 </template>
                             </div>
                             <div class="standard-item-content">
@@ -510,6 +527,7 @@ export default {
                 growPlantModelDetailBos: [
                     {
                         parameterName: "种植天数",
+                        customParameterName: "", // 自定义参数
                         leastValue: undefined,
                         maxValue: undefined,
                         unit: "",
@@ -727,6 +745,15 @@ export default {
                         },
                     ],
                     growPlantModelDetailBos: row.growPlantModelDetailBos.map((item) => {
+                        // 排除固定的种植天数
+                        if (item.parameterName !== "种植天数") {
+                            // 找到自定义参数
+                            const element = this.allParamsList.find((child) => child.title === item.parameterName);
+                            if (!element) {
+                                item.customParameterName = item.parameterName;
+                                item.parameterName = "自定义";
+                            }
+                        }
                         return {
                             ...item,
                         };
@@ -747,6 +774,7 @@ export default {
                 growPlantModelDetailBos: [
                     {
                         parameterName: "种植天数",
+                        customParameterName: "",
                         leastValue: undefined,
                         maxValue: undefined,
                         unit: "",
@@ -773,6 +801,7 @@ export default {
         addStandard() {
             this.modelForm.growPlantModelDetailBos.push({
                 parameterName: "",
+                customParameterName: "",
                 min: undefined,
                 max: undefined,
                 unit: "",
@@ -792,6 +821,7 @@ export default {
                 this.modelForm.growPlantModelDetailBos.some(
                     (item) =>
                         !item.parameterName ||
+                        (item.parameterName === "自定义" && !item.customParameterName) ||
                         (!item.leastValue && item.leastValue !== 0) ||
                         !item.maxValue ||
                         !item.unit
@@ -803,11 +833,17 @@ export default {
             const params = {
                 createName: "",
                 growModelId: this.plantModelId,
-                growPlantModelDetailBos: this.modelForm.growPlantModelDetailBos,
+                growPlantModelDetailBos: [],
                 id: this.modelForm.id,
                 image: "",
                 phaseName: this.modelForm.phaseName,
             };
+            params.growPlantModelDetailBos = this.modelForm.growPlantModelDetailBos.map((item) => {
+                if (item.parameterName === "自定义") {
+                    item.parameterName = item.customParameterName;
+                }
+                return item;
+            });
             if (this.modelForm.imgList[0]) {
                 const response = this.modelForm.imgList[0].response;
                 params.image = response && response.data && response.data.imageUrl;
@@ -1459,6 +1495,25 @@ export default {
                         color: #6b91f2;
                         margin-left: 10px;
                         cursor: pointer;
+                    }
+                    .parameter-name-div {
+                        display: flex;
+                        align-items: center;
+                        width: 280px;
+                        .input {
+                            width: 100%;
+                        }
+                        .left-view {
+                            flex-grow: 1;
+                            .parameter-name-select {
+                                width: 100%;
+                            }
+                        }
+                        .right-view {
+                            padding-left: 10px;
+                            flex-shrink: 0;
+                            flex-basis: 50%;
+                        }
                     }
                 }
             }
