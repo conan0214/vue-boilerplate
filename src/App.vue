@@ -18,14 +18,16 @@ export default {
     methods: {},
     created: function () {},
     mounted: function () {
-        // const tokenKey = '__token'
-        // let token = null
-        // if (getQueryString(tokenKey)) {
-        //     token = getQueryString(tokenKey)
-        // }
-        // if (this.$route.query[tokenKey]) {
-        //     token = this.$route.query[tokenKey]
-        // }
+        const tokenKey = "__token";
+        let token = null;
+        if (getQueryString(tokenKey)) {
+            token = getQueryString(tokenKey);
+            localStorage.setItem("token", token);
+        }
+        if (this.$route.query[tokenKey]) {
+            token = this.$route.query[tokenKey];
+            localStorage.setItem("token", token);
+        }
     },
 };
 </script>

@@ -1,5 +1,6 @@
-import request from "./index";
+import { request, cmsRequest } from "./index";
 
+// 废弃
 const uploadUrl = `https://erp.deepberry.cn/api/v1/adam/upload`;
 
 // 上传图片
@@ -167,6 +168,16 @@ const allParamsListApi = function (params) {
     return request.post("/api/v1/adam/adminGrowModel/getGrowPlantParam", params);
 };
 
+// 获取sts-token，用于上传文件到ali-oss
+const getStsTokenApi = function (params) {
+    return cmsRequest.get("/api/cms/system/upload/sts-token", {
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        params,
+    });
+};
+
 export {
     uploadUrl,
     uploadApi,
@@ -202,4 +213,5 @@ export {
     stageSuggestionListApi,
     delStageSuggestionApi,
     allParamsListApi,
+    getStsTokenApi,
 };
