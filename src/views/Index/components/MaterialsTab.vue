@@ -79,18 +79,26 @@
                         />
                     </el-form-item>
                     <el-form-item label="农资类型">
-                        <el-select
-                            v-model="addForm.agriculturalCategoryId"
-                            class="form-select"
-                            placeholder="选择农资类型"
-                        >
-                            <el-option
-                                v-for="item in materialsTypeList"
-                                :label="item.title"
-                                :value="item.id"
-                                :key="item.id"
-                            />
-                        </el-select>
+                        <div class="agricultural-category-div">
+                            <div class="left-view">
+                                <el-select
+                                    v-model="addForm.agriculturalCategoryId"
+                                    class="form-select"
+                                    placeholder="选择农资类型"
+                                    @change="selectAgriculturalCategory"
+                                >
+                                    <el-option
+                                        v-for="item in materialsTypeListAfterProcess"
+                                        :label="item.title"
+                                        :value="item.id"
+                                        :key="item.id"
+                                    />
+                                </el-select>
+                            </div>
+                            <div v-if="agriculturalCategoryText === '自定义'" class="right-view">
+                                <el-input v-model="addForm.customAgriculturalCategory" placeholder="请输入农资类型" />
+                            </div>
+                        </div>
                     </el-form-item>
                     <el-form-item label="参考单价">
                         <el-input-number
@@ -320,6 +328,7 @@ export default {
                 agriculturalId: 0, // 农资ID
                 title: "",
                 agriculturalCategoryId: "",
+                customAgriculturalCategory: "", // 自定义农资类型
                 agriculturalPrice: undefined,
                 agriculturalCount: undefined,
                 unitweightid: "",
@@ -334,6 +343,34 @@ export default {
             selectedMaterials: null, // 已选择的农资
             isEdit: false, // 是否编辑
         };
+    },
+    computed: {
+        // 处理后的农资类型列表（编辑的时候自定义ID改变）
+        materialsTypeListAfterProcess() {
+            if (this.isEdit && this.selectedMaterials && this.selectedMaterials.agriculturalBo) {
+                const list = this.materialsTypeList.map((item) => {
+                    return {
+                        ...item,
+                    };
+                });
+                const item = list.find(
+                    (item) => item.id === this.selectedMaterials.agriculturalBo.agriculturalCategoryId
+                );
+                if (!item) {
+                    const index = list.findIndex((item) => item.title === "自定义");
+                    list[index].id = this.selectedMaterials.agriculturalBo.agriculturalCategoryId;
+                }
+                return list;
+            }
+            return this.materialsTypeList;
+        },
+        // 农资类型文案
+        agriculturalCategoryText() {
+            const typeItem = this.materialsTypeListAfterProcess.find(
+                (item) => item.id === this.addForm.agriculturalCategoryId
+            );
+            return typeItem ? typeItem.title : "";
+        },
     },
     watch: {
         searchForm: {
@@ -442,12 +479,17 @@ export default {
                 bannerList: "",
                 richContent: this.addForm.richContent,
             };
-            const typeItem = this.materialsTypeList.find((item) => item.id === this.addForm.agriculturalCategoryId);
+            const typeItem = this.materialsTypeListAfterProcess.find(
+                (item) => item.id === this.addForm.agriculturalCategoryId
+            );
             const unitItem = this.unitTypeList.find((item) => item.id === this.addForm.unitweightid);
             const unitmeasurementItem = this.unitmeasurementList.find(
                 (item) => item.id === this.addForm.unitmeasurementid
             );
             params.agriculturalBo.agriculturalCategory = typeItem && typeItem.title;
+            if (this.agriculturalCategoryText === "自定义") {
+                params.agriculturalBo.agriculturalCategory = this.addForm.customAgriculturalCategory;
+            }
             params.agriculturalBo.unitmeasurement = unitmeasurementItem && unitmeasurementItem.title;
             params.agriculturalBo.unitweight = unitItem && unitItem.title;
             if (this.addForm.bannerList && this.addForm.bannerList.length > 0) {
@@ -508,6 +550,7 @@ export default {
                 agriculturalId: 0,
                 title: "",
                 agriculturalCategoryId: "",
+                customAgriculturalCategory: "",
                 agriculturalPrice: undefined,
                 agriculturalCount: undefined,
                 unitweightid: "",
@@ -526,6 +569,7 @@ export default {
                 agriculturalId: 0,
                 title: "",
                 agriculturalCategoryId: "",
+                customAgriculturalCategory: "",
                 agriculturalPrice: undefined,
                 agriculturalCount: undefined,
                 unitweightid: "",
@@ -542,6 +586,7 @@ export default {
                 agriculturalId: 0,
                 title: "",
                 agriculturalCategoryId: "",
+                customAgriculturalCategory: "",
                 agriculturalPrice: undefined,
                 agriculturalCount: undefined,
                 unitweightid: "",
@@ -562,6 +607,7 @@ export default {
                     agriculturalId: this.selectedMaterials.agriculturalBo.id,
                     title: this.selectedMaterials.agriculturalBo.title,
                     agriculturalCategoryId: this.selectedMaterials.agriculturalBo.agriculturalCategoryId,
+                    customAgriculturalCategory: this.selectedMaterials.agriculturalBo.agriculturalCategory,
                     agriculturalPrice: this.selectedMaterials.agriculturalBo.agriculturalPrice,
                     agriculturalCount: this.selectedMaterials.agriculturalBo.agriculturalCount,
                     unitweightid: this.selectedMaterials.agriculturalBo.unitweightid,
@@ -616,6 +662,10 @@ export default {
             };
             return obj[status] || "";
         },
+        // 选择农资类型
+        selectAgriculturalCategory() {
+            this.addForm.customAgriculturalCategory = "";
+        },
     },
 };
 </script>
@@ -657,6 +707,18 @@ export default {
             width: 80px;
             height: 80px;
             border-radius: 12px;
+        }
+        .agricultural-category-div {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            .left-view {
+                flex-grow: 1;
+            }
+            .right-view {
+                padding-left: 10px;
+                flex-basis: 50%;
+            }
         }
     }
     .dialog-content {
