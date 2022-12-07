@@ -85,9 +85,10 @@
                                     v-model="addForm.agriculturalCategoryId"
                                     class="form-select"
                                     placeholder="选择农资类型"
+                                    @change="selectAgriculturalCategory"
                                 >
                                     <el-option
-                                        v-for="item in materialsTypeList"
+                                        v-for="item in materialsTypeListAfterProcess"
                                         :label="item.title"
                                         :value="item.id"
                                         :key="item.id"
@@ -344,9 +345,30 @@ export default {
         };
     },
     computed: {
+        // 处理后的农资类型列表（编辑的时候自定义ID改变）
+        materialsTypeListAfterProcess() {
+            if (this.isEdit && this.selectedMaterials && this.selectedMaterials.agriculturalBo) {
+                const list = this.materialsTypeList.map((item) => {
+                    return {
+                        ...item,
+                    };
+                });
+                const item = list.find(
+                    (item) => item.id === this.selectedMaterials.agriculturalBo.agriculturalCategoryId
+                );
+                if (!item) {
+                    const index = list.findIndex((item) => item.title === "自定义");
+                    list[index].id = this.selectedMaterials.agriculturalBo.agriculturalCategoryId;
+                }
+                return list;
+            }
+            return this.materialsTypeList;
+        },
         // 农资类型文案
         agriculturalCategoryText() {
-            const typeItem = this.materialsTypeList.find((item) => item.id === this.addForm.agriculturalCategoryId);
+            const typeItem = this.materialsTypeListAfterProcess.find(
+                (item) => item.id === this.addForm.agriculturalCategoryId
+            );
             return typeItem ? typeItem.title : "";
         },
     },
@@ -457,7 +479,9 @@ export default {
                 bannerList: "",
                 richContent: this.addForm.richContent,
             };
-            const typeItem = this.materialsTypeList.find((item) => item.id === this.addForm.agriculturalCategoryId);
+            const typeItem = this.materialsTypeListAfterProcess.find(
+                (item) => item.id === this.addForm.agriculturalCategoryId
+            );
             const unitItem = this.unitTypeList.find((item) => item.id === this.addForm.unitweightid);
             const unitmeasurementItem = this.unitmeasurementList.find(
                 (item) => item.id === this.addForm.unitmeasurementid
@@ -637,6 +661,10 @@ export default {
                 1: "status-stop",
             };
             return obj[status] || "";
+        },
+        // 选择农资类型
+        selectAgriculturalCategory() {
+            this.addForm.customAgriculturalCategory = "";
         },
     },
 };
