@@ -9,11 +9,12 @@ const request = axios.create({
     timeout: 10000,
 });
 //  // 请求拦截
-//  request.interceptors.request.use(config => {
-//      // 自定义header，可添加项目token
-//      config.headers.token = 'token';
-//      return config;
-//  });
+request.interceptors.request.use((config) => {
+    // 自定义header，可添加项目token
+    const token = localStorage.getItem("token");
+    config.headers.token = token;
+    return config;
+});
 // 返回拦截
 request.interceptors.response.use(
     (response) => {
