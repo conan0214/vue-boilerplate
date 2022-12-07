@@ -147,8 +147,8 @@
                     <el-form-item label="农资banner图">
                         <el-upload
                             v-model:file-list="addForm.bannerList"
-                            :action="uploadUrl"
                             list-type="picture-card"
+                            :http-request="uploadFile"
                             :on-preview="handlePictureCardPreview"
                             :on-remove="handleRemove"
                         >
@@ -272,7 +272,6 @@
 
 <script>
 import {
-    uploadUrl,
     materialsTypeListApi,
     weightUnitListApi,
     unitMeasurementListApi,
@@ -282,6 +281,7 @@ import {
     updateMaterialsStatusApi,
 } from "../../../request/api.js";
 import Tinymce from "../../../components/Tinymce/Tinymce.vue";
+import { uploadToOss } from "../../../utils/index.js";
 export default {
     name: "MaterialsTab",
     components: {
@@ -295,7 +295,6 @@ export default {
     },
     data() {
         return {
-            uploadUrl,
             materialsTypeList: [],
             unitTypeList: [],
             unitmeasurementList: [],
@@ -665,6 +664,19 @@ export default {
         // 选择农资类型
         selectAgriculturalCategory() {
             this.addForm.customAgriculturalCategory = "";
+        },
+        // 上传文件
+        uploadFile(data) {
+            const file = data.file;
+            uploadToOss(file).then((res) => {
+                const filePath = `https://cdn.deepberry.cn/${res.name}`;
+                const index = this.addForm.bannerList.length - 1;
+                this.addForm.bannerList[index].response = {
+                    data: {
+                        imageUrl: filePath,
+                    },
+                };
+            });
         },
     },
 };

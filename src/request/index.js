@@ -8,7 +8,7 @@ const request = axios.create({
     // 配置请求超时时间
     timeout: 10000,
 });
-//  // 请求拦截
+// 请求拦截
 request.interceptors.request.use((config) => {
     // 自定义header，可添加项目token
     const token = localStorage.getItem("token");
@@ -26,4 +26,27 @@ request.interceptors.response.use(
         ElMessage.error("网络请求异常，请稍后重试!");
     }
 );
-export default request;
+
+// 创建一个独立的axios实例
+const cmsRequest = axios.create({
+    // 设置baseUr地址,如果通过proxy跨域可直接填写base地址
+    baseURL: "https://cms.deepberry.cn",
+    // 配置请求超时时间
+    timeout: 10000,
+});
+// 请求拦截
+// cmsRequest.interceptors.request.use((config) => {
+//     return config;
+// });
+// 返回拦截
+cmsRequest.interceptors.response.use(
+    (response) => {
+        // 获取接口返回结果
+        const res = response.data;
+        return res;
+    },
+    () => {
+        ElMessage.error("网络请求异常，请稍后重试!");
+    }
+);
+export { request, cmsRequest };

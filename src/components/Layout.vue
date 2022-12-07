@@ -25,7 +25,7 @@
             </el-aside>
             <el-container>
                 <el-header class="header-wrapper">
-                    <div class="header">
+                    <!-- <div class="header">
                         <div class="header-item">
                             <el-icon><QuestionFilled /></el-icon>
                             帮助
@@ -48,7 +48,7 @@
                             </el-dropdown>
                         </div>
                         <div class="header-item">退出</div>
-                    </div>
+                    </div> -->
                     <el-breadcrumb separator="/">
                         <el-breadcrumb-item>{{ pageName }}</el-breadcrumb-item>
                     </el-breadcrumb>
@@ -130,6 +130,7 @@ export default {
         }
     }
     .header-wrapper {
+        padding-top: 20px;
         background: #fff;
         .header {
             display: flex;

@@ -200,9 +200,9 @@
                         <el-upload
                             v-if="modelForm.imgList.length === 0"
                             v-model:file-list="modelForm.imgList"
-                            :action="uploadUrl"
                             :show-file-list="false"
                             :limit="1"
+                            :http-request="uploadFileForGrowthStage"
                         >
                             <div class="btn-upload">
                                 <el-icon><Camera /></el-icon>
@@ -380,9 +380,9 @@
                         <el-upload
                             v-if="farmGuideForm.imgList.length === 0"
                             v-model:file-list="farmGuideForm.imgList"
-                            :action="uploadUrl"
                             :show-file-list="false"
                             :limit="1"
+                            :http-request="uploadFileForFarmGuide"
                         >
                             <div class="btn-upload">
                                 <el-icon><Camera /></el-icon>
@@ -434,9 +434,9 @@
                         <el-upload
                             v-if="cureGuideForm.imgList.length === 0"
                             v-model:file-list="cureGuideForm.imgList"
-                            :action="uploadUrl"
                             :show-file-list="false"
                             :limit="1"
+                            :http-request="uploadFileForCureGuide"
                         >
                             <div class="btn-upload">
                                 <el-icon><Camera /></el-icon>
@@ -481,8 +481,8 @@
 <script>
 import Sortable from "sortablejs";
 import VueDraggable from "vuedraggable";
+import { uploadToOss } from "../../utils/index.js";
 import {
-    uploadUrl,
     saveGrowthStageApi,
     savePlantSuggestionApi,
     saveFarmGuideApi,
@@ -506,7 +506,6 @@ export default {
     data() {
         return {
             plantModelId: "", // 种植模型ID
-            uploadUrl,
             growthTypeList: [], // 栽培方式
             form: {
                 categoryTitle: "",
@@ -1213,6 +1212,45 @@ export default {
                 const index = this.growthStageList.findIndex((item) => item.id === this.selectedGrowthStage.id);
                 this.selectedGrowthStageIndex = index;
             }
+        },
+        // 生长阶段上传文件
+        uploadFileForGrowthStage(data) {
+            const file = data.file;
+            uploadToOss(file).then((res) => {
+                const filePath = `https://cdn.deepberry.cn/${res.name}`;
+                const index = this.modelForm.imgList.length - 1;
+                this.modelForm.imgList[index].response = {
+                    data: {
+                        imageUrl: filePath,
+                    },
+                };
+            });
+        },
+        // 农事指导上传文件
+        uploadFileForFarmGuide(data) {
+            const file = data.file;
+            uploadToOss(file).then((res) => {
+                const filePath = `https://cdn.deepberry.cn/${res.name}`;
+                const index = this.farmGuideForm.imgList.length - 1;
+                this.farmGuideForm.imgList[index].response = {
+                    data: {
+                        imageUrl: filePath,
+                    },
+                };
+            });
+        },
+        // 防治病虫害上传文件
+        uploadFileForCureGuide(data) {
+            const file = data.file;
+            uploadToOss(file).then((res) => {
+                const filePath = `https://cdn.deepberry.cn/${res.name}`;
+                const index = this.cureGuideForm.imgList.length - 1;
+                this.cureGuideForm.imgList[index].response = {
+                    data: {
+                        imageUrl: filePath,
+                    },
+                };
+            });
         },
     },
 };
